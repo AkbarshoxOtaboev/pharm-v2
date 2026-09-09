@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pharm_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 30MB
+  jpa:
+    hibernate:
+      # validate — mavjud DB strukturasini o'zgartirmaydi
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    database: PostgreSql
+    open-in-view: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  autoconfigure:
+    # Redis majburiy emas — TokenBlacklist in-memory fallback ishlatadi
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+server:
+  port: 8080
+
+logging:
+  level:
+    uz.uwon.pharm: DEBUG
+    org.springframework.security: INFO
