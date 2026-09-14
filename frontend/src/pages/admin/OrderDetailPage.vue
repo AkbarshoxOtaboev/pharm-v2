@@ -23,6 +23,12 @@ const ORDER_STATUSES: OrderStatus[] = [
   'DELETED',
 ]
 
+const LOCKED_STATUSES: OrderStatus[] = ['DELIVERED', 'CANCELLED', 'DELETED']
+
+function isStatusLocked(status?: string | null) {
+  return LOCKED_STATUSES.includes((status || '').toUpperCase() as OrderStatus)
+}
+
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
@@ -55,6 +61,7 @@ async function load() {
 
 async function saveStatus() {
   if (!detail.value?.orderId || !newStatus.value) return
+  if (isStatusLocked(detail.value.status)) return
   saving.value = true
   error.value = ''
   try {
@@ -113,7 +120,7 @@ onMounted(load)
           </p>
         </div>
 
-        <div class="mt-5 flex flex-wrap items-end gap-2">
+        <div v-if="!isStatusLocked(detail.status)" class="mt-5 flex flex-wrap items-end gap-2">
           <AppSelect v-model="newStatus" :label="t('orders.changeStatus')" class="min-w-56">
             <option v-for="s in ORDER_STATUSES" :key="s" :value="s">{{ enumLabel('orderStatus', s) }}</option>
           </AppSelect>

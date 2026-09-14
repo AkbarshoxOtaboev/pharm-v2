@@ -33,33 +33,25 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div
-    class="relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-50 p-4 dark:bg-gray-900"
-  >
+  <div class="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
     <div
-      class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(70,95,255,0.15),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(18,183,106,0.12),transparent_35%)] dark:bg-[radial-gradient(circle_at_20%_20%,rgba(70,95,255,0.22),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(18,183,106,0.12),transparent_35%)]"
+      class="absolute inset-0 bg-cover bg-center bg-no-repeat"
+      style="background-image: url('/login-bg.png')"
     />
+    <div class="absolute inset-0 bg-gray-950/45" />
+
     <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
       <LocaleSwitcher />
       <ThemeToggle />
     </div>
+
     <form
-      class="relative w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-theme-md dark:border-gray-800 dark:bg-gray-dark"
+      class="relative w-full max-w-md rounded-2xl border border-white/25 bg-white/20 p-8 shadow-theme-md backdrop-blur-xl"
       @submit.prevent="onSubmit"
     >
-      <div class="mb-8 text-center">
-        <div
-          class="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-brand-500 text-xl font-bold text-white"
-        >
-          P
-        </div>
-        <h1 class="text-2xl font-bold text-gray-800 dark:text-white/90">{{ t('app.name') }}</h1>
-        <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400">{{ t('app.tagline') }}</p>
-      </div>
-
       <div
         v-if="error"
-        class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
+        class="mb-4 rounded-xl border border-error-200/60 bg-error-50/80 px-4 py-3 text-theme-sm text-error-700"
       >
         {{ error }}
       </div>
@@ -77,3 +69,22 @@ async function onSubmit() {
     </form>
   </div>
 </template>
+
+<style scoped>
+:deep(label span) {
+  color: rgba(255, 255, 255, 0.92);
+}
+:deep(input) {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  box-shadow: none;
+}
+:deep(input::placeholder) {
+  color: rgba(255, 255, 255, 0.55);
+}
+:deep(input:focus) {
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.28);
+}
+</style>

@@ -37,6 +37,12 @@ export interface OrderListParams {
   size?: number
 }
 
+export interface OrderDeliveredInfoResponse {
+  image?: string
+  comment?: string
+  createdAt?: string
+}
+
 export async function fetchOrders(params: OrderListParams = {}) {
   const { data } = await api.get<ApiResponse<OrderResponse[]>>('/orders', { params })
   return data
@@ -44,6 +50,13 @@ export async function fetchOrders(params: OrderListParams = {}) {
 
 export async function fetchOrder(id: number) {
   const { data } = await api.get<ApiResponse<OrderDetailResponse>>(`/orders/${id}`)
+  return data
+}
+
+export async function fetchOrderComments(orderId: number) {
+  const { data } = await api.get<ApiResponse<OrderDeliveredInfoResponse[]>>(
+    `/orders/${orderId}/comments`,
+  )
   return data
 }
 
