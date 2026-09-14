@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { enumLabel } from '@/i18n'
 import {
   blockUser,
   createUser,
@@ -23,6 +25,7 @@ import { apiError, statusTone } from '@/utils/format'
 
 const ROLES: Role[] = ['ADMIN', 'OPERATOR', 'COURIER', 'VIEWER']
 
+const { t } = useI18n()
 const users = ref<UserResponse[]>([])
 const loading = ref(false)
 const error = ref('')
@@ -60,7 +63,7 @@ async function load() {
     const res = await fetchUsers()
     users.value = res.data || []
   } catch (e) {
-    error.value = apiError(e, 'Foydalanuvchilarni yuklab bo‘lmadi')
+    error.value = apiError(e, 'errors.loadUsers')
   } finally {
     loading.value = false
   }
@@ -91,18 +94,18 @@ async function onUpload(file: File) {
       form.avatar = res.data.filename
     }
   } catch (e) {
-    formError.value = apiError(e, 'Rasm yuklanmadi')
+    formError.value = apiError(e, 'errors.uploadImage')
   }
 }
 
 async function save() {
   formError.value = ''
   if (!form.fullName.trim() || !form.username.trim()) {
-    formError.value = 'Ism va login majburiy'
+    formError.value = t('errors.nameUsernameRequired')
     return
   }
   if (!editingUsername.value && !form.password) {
-    formError.value = 'Yangi foydalanuvchi uchun parol majburiy'
+    formError.value = t('errors.passwordRequired')
     return
   }
 
@@ -126,19 +129,19 @@ async function save() {
     modalOpen.value = false
     await load()
   } catch (e) {
-    formError.value = apiError(e, 'Saqlab bo‘lmadi')
+    formError.value = apiError(e, 'errors.saveFailed')
   } finally {
     saving.value = false
   }
 }
 
 async function onDelete(u: UserResponse) {
-  if (!confirm(`${u.fullName} o‘chirilsinmi?`)) return
+  if (!confirm(t('common.confirmDeleteNamed', { name: u.fullName }))) return
   try {
     await deleteUser(u.username)
     await load()
   } catch (e) {
-    error.value = apiError(e, 'O‘chirib bo‘lmadi')
+    error.value = apiError(e, 'errors.deleteFailed')
   }
 }
 
@@ -151,7 +154,7 @@ async function toggleBlock(u: UserResponse) {
     }
     await load()
   } catch (e) {
-    error.value = apiError(e, 'Statusni o‘zgartirib bo‘lmadi')
+    error.value = apiError(e, 'errors.changeStatus')
   }
 }
 
@@ -160,53 +163,53 @@ onMounted(load)
 
 <template>
   <div>
-    <PageHeader title="Foydalanuvchilar" subtitle="Admin, operator, kuryer va viewer">
+    <PageHeader :title="t('users.title')" :subtitle="t('users.subtitle')">
       <template #actions>
-        <AppButton @click="openCreate">Qo‘shish</AppButton>
+        <AppButton @click="openCreate">{{ t('common.add') }}</AppButton>
       </template>
     </PageHeader>
 
     <div
       v-if="error"
-      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
     >
       {{ error }}
     </div>
 
     <DataTable
       :loading="loading"
-      :empty="!loading && !users.length ? 'Foydalanuvchilar yo‘q' : undefined"
+      :empty="!loading && !users.length ? t('users.empty') : undefined"
     >
       <template #head>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Foydalanuvchi</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Login</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Rol</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Telefon</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Status</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Amallar</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('users.user') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.login') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.role') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.phone') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.status') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.actions') }}</th>
       </template>
       <tr v-for="u in users" :key="u.id">
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <div class="flex items-center gap-3">
             <UserAvatar :avatar="u.avatar" :name="u.fullName" size="sm" />
             <span class="font-medium">{{ u.fullName }}</span>
           </div>
         </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ u.username }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ u.role }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
-          {{ u.personalPhone || u.workPhone || '—' }}
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ u.username }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ enumLabel('role', u.role) }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
+          {{ u.personalPhone || u.workPhone || t('common.empty') }}
         </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
-          <AppBadge :tone="statusTone(String(u.status))">{{ u.status }}</AppBadge>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
+          <AppBadge :tone="statusTone(String(u.status))">{{ enumLabel('status', String(u.status)) }}</AppBadge>
         </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <div class="flex flex-wrap gap-2">
-            <AppButton size="sm" variant="secondary" @click="openEdit(u)">Tahrir</AppButton>
+            <AppButton size="sm" variant="secondary" @click="openEdit(u)">{{ t('common.edit') }}</AppButton>
             <AppButton size="sm" variant="ghost" @click="toggleBlock(u)">
-              {{ String(u.status).toUpperCase() === 'BLOCKED' ? 'Blokdan chiqarish' : 'Bloklash' }}
+              {{ String(u.status).toUpperCase() === 'BLOCKED' ? t('users.unblock') : t('users.block') }}
             </AppButton>
-            <AppButton size="sm" variant="danger" @click="onDelete(u)">O‘chirish</AppButton>
+            <AppButton size="sm" variant="danger" @click="onDelete(u)">{{ t('common.delete') }}</AppButton>
           </div>
         </td>
       </tr>
@@ -214,37 +217,37 @@ onMounted(load)
 
     <AppModal
       :open="modalOpen"
-      :title="editingUsername ? 'Foydalanuvchini tahrirlash' : 'Yangi foydalanuvchi'"
+      :title="editingUsername ? t('users.editTitle') : t('users.createTitle')"
       @close="modalOpen = false"
     >
       <div
         v-if="formError"
-        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
       >
         {{ formError }}
       </div>
       <form class="space-y-3" @submit.prevent="save">
         <AvatarPicker v-model="form.avatar" allow-upload @upload="onUpload" />
-        <AppInput v-model="form.fullName" label="To‘liq ism" />
+        <AppInput v-model="form.fullName" :label="t('orders.fullName')" />
         <AppInput
           v-model="form.username"
-          label="Login"
+          :label="t('common.login')"
           :disabled="!!editingUsername"
         />
         <AppInput
           v-model="form.password"
-          label="Parol"
+          :label="t('common.password')"
           type="password"
-          :placeholder="editingUsername ? 'Bo‘sh qoldirish — o‘zgarmaydi' : ''"
+          :placeholder="editingUsername ? t('users.passwordKeep') : ''"
         />
-        <AppInput v-model="form.personalPhone" label="Shaxsiy telefon" />
-        <AppInput v-model="form.workPhone" label="Ish telefoni" />
-        <AppSelect v-model="form.role" label="Rol">
-          <option v-for="r in ROLES" :key="r" :value="r">{{ r }}</option>
+        <AppInput v-model="form.personalPhone" :label="t('users.personalPhone')" />
+        <AppInput v-model="form.workPhone" :label="t('users.workPhone')" />
+        <AppSelect v-model="form.role" :label="t('common.role')">
+          <option v-for="r in ROLES" :key="r" :value="r">{{ enumLabel('role', r) }}</option>
         </AppSelect>
         <div class="flex justify-end gap-2 pt-2">
-          <AppButton type="button" variant="secondary" @click="modalOpen = false">Bekor</AppButton>
-          <AppButton type="submit" :loading="saving">Saqlash</AppButton>
+          <AppButton type="button" variant="secondary" @click="modalOpen = false">{{ t('common.cancel') }}</AppButton>
+          <AppButton type="submit" :loading="saving">{{ t('common.save') }}</AppButton>
         </div>
       </form>
     </AppModal>

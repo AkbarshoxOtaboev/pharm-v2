@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { enumLabel } from '@/i18n'
 import {
   fetchOrder,
   fetchOrders,
@@ -28,6 +30,7 @@ const ORDER_STATUSES: OrderStatus[] = [
   'DELETED',
 ]
 
+const { t } = useI18n()
 const router = useRouter()
 const orders = ref<OrderResponse[]>([])
 const loading = ref(false)
@@ -67,7 +70,7 @@ async function load() {
     totalPages.value = res.meta?.totalPages ?? 1
     totalElements.value = res.meta?.totalElements ?? orders.value.length
   } catch (e) {
-    error.value = apiError(e, 'Buyurtmalarni yuklab bo‘lmadi')
+    error.value = apiError(e, 'errors.loadOrders')
   } finally {
     loading.value = false
   }
@@ -97,7 +100,7 @@ async function openDetail(id: number) {
     detail.value = res.data
     newStatus.value = res.data?.status || ''
   } catch (e) {
-    detailError.value = apiError(e, 'Buyurtma tafsilotini yuklab bo‘lmadi')
+    detailError.value = apiError(e, 'errors.loadOrderDetail')
   } finally {
     detailLoading.value = false
   }
@@ -112,7 +115,7 @@ async function saveStatus() {
     await openDetail(detail.value.orderId)
     await load()
   } catch (e) {
-    detailError.value = apiError(e, 'Statusni yangilab bo‘lmadi')
+    detailError.value = apiError(e, 'errors.updateStatus')
   } finally {
     statusSaving.value = false
   }
@@ -123,64 +126,64 @@ onMounted(load)
 
 <template>
   <div>
-    <PageHeader title="Buyurtmalar" subtitle="Buyurtmalar ro‘yxati va boshqaruvi">
+    <PageHeader :title="t('orders.title')" :subtitle="t('orders.subtitle')">
       <template #actions>
-        <AppButton @click="router.push('/admin/orders/create')">Yangi buyurtma</AppButton>
+        <AppButton @click="router.push('/admin/orders/create')">{{ t('orders.newOrder') }}</AppButton>
       </template>
     </PageHeader>
 
-    <div class="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-theme-xs">
+    <div class="mb-4 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4 shadow-theme-xs">
       <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <AppInput v-model="phone" label="Telefon" placeholder="+998..." />
-        <AppSelect v-model="status" label="Status">
-          <option value="">Barchasi</option>
-          <option v-for="s in ORDER_STATUSES" :key="s" :value="s">{{ s }}</option>
+        <AppInput v-model="phone" :label="t('common.phone')" placeholder="+998..." />
+        <AppSelect v-model="status" :label="t('common.status')">
+          <option value="">{{ t('common.all') }}</option>
+          <option v-for="s in ORDER_STATUSES" :key="s" :value="s">{{ enumLabel('orderStatus', s) }}</option>
         </AppSelect>
-        <AppInput v-model="fromDate" label="Dan" type="date" />
-        <AppInput v-model="toDate" label="Gacha" type="date" />
+        <AppInput v-model="fromDate" :label="t('common.from')" type="date" />
+        <AppInput v-model="toDate" :label="t('common.to')" type="date" />
         <div class="flex items-end gap-2">
-          <AppButton class="w-full" @click="onSearch">Qidirish</AppButton>
-          <AppButton variant="secondary" @click="resetFilters">Tozalash</AppButton>
+          <AppButton class="w-full" @click="onSearch">{{ t('common.search') }}</AppButton>
+          <AppButton variant="secondary" @click="resetFilters">{{ t('common.clear') }}</AppButton>
         </div>
       </div>
     </div>
 
     <div
       v-if="error"
-      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
     >
       {{ error }}
     </div>
 
     <DataTable
       :loading="loading"
-      :empty="!loading && !orders.length ? 'Buyurtmalar topilmadi' : undefined"
+      :empty="!loading && !orders.length ? t('orders.notFound') : undefined"
     >
       <template #head>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">ID</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Raqam</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Mijoz</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Telefon</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Status</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Summa</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Kuryer</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Amallar</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.id') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.number') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.customer') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.phone') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.status') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.amount') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.courier') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.actions') }}</th>
       </template>
       <tr v-for="o in orders" :key="o.id">
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ o.id }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ o.orderNumber || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ o.customerName || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ o.customerPhone || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
-          <AppBadge :tone="statusTone(o.orderStatus)">{{ o.orderStatus || '—' }}</AppBadge>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ o.id }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ o.orderNumber || t('common.empty') }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ o.customerName || t('common.empty') }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ o.customerPhone || t('common.empty') }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
+          <AppBadge :tone="statusTone(o.orderStatus)">{{ enumLabel('orderStatus', o.orderStatus, t('common.empty')) }}</AppBadge>
         </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ money(o.totalSum) }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ o.courierName || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(o.totalSum) }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ o.courierName || t('common.empty') }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <div class="flex flex-wrap gap-2">
-            <AppButton size="sm" variant="secondary" @click="openDetail(o.id)">Ko‘rish</AppButton>
+            <AppButton size="sm" variant="secondary" @click="openDetail(o.id)">{{ t('common.view') }}</AppButton>
             <AppButton size="sm" variant="ghost" @click="router.push(`/admin/orders/${o.id}`)">
-              Sahifa
+              {{ t('common.page') }}
             </AppButton>
           </div>
         </td>
@@ -188,7 +191,7 @@ onMounted(load)
     </DataTable>
 
     <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-      <p class="text-theme-sm text-gray-500">Jami: {{ totalElements }}</p>
+      <p class="text-theme-sm text-gray-500 dark:text-gray-400">{{ t('common.total') }}: {{ totalElements }}</p>
       <div class="flex items-center gap-2">
         <AppButton
           size="sm"
@@ -196,76 +199,76 @@ onMounted(load)
           :disabled="page <= 0"
           @click="page--; load()"
         >
-          Oldingi
+          {{ t('common.previous') }}
         </AppButton>
-        <span class="text-theme-sm text-gray-600">{{ page + 1 }} / {{ totalPages || 1 }}</span>
+        <span class="text-theme-sm text-gray-600 dark:text-gray-400">{{ page + 1 }} / {{ totalPages || 1 }}</span>
         <AppButton
           size="sm"
           variant="secondary"
           :disabled="page + 1 >= totalPages"
           @click="page++; load()"
         >
-          Keyingi
+          {{ t('common.next') }}
         </AppButton>
       </div>
     </div>
 
     <AppModal
       :open="detailOpen"
-      title="Buyurtma tafsiloti"
+      :title="t('orders.detail')"
       @close="detailOpen = false"
     >
-      <div v-if="detailLoading" class="text-theme-sm text-gray-500">Yuklanmoqda...</div>
+      <div v-if="detailLoading" class="text-theme-sm text-gray-500 dark:text-gray-400">{{ t('common.loading') }}</div>
       <div
         v-else-if="detailError"
-        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
       >
         {{ detailError }}
       </div>
       <template v-else-if="detail">
         <div class="mb-4 grid grid-cols-1 gap-2 text-theme-sm text-gray-700 sm:grid-cols-2">
-          <p><span class="text-gray-500">ID:</span> {{ detail.orderId }}</p>
-          <p><span class="text-gray-500">Raqam:</span> {{ detail.orderNumber || '—' }}</p>
-          <p><span class="text-gray-500">Mijoz:</span> {{ detail.fullName || '—' }}</p>
-          <p><span class="text-gray-500">Telefon:</span> {{ detail.phone || '—' }}</p>
-          <p><span class="text-gray-500">Manzil:</span> {{ detail.address || '—' }}</p>
-          <p><span class="text-gray-500">Uy:</span> {{ detail.house || '—' }}</p>
-          <p><span class="text-gray-500">Podyezd:</span> {{ detail.entrance || '—' }}</p>
-          <p><span class="text-gray-500">Xonadon:</span> {{ detail.apartment || '—' }}</p>
-          <p><span class="text-gray-500">Qavat:</span> {{ detail.floor || '—' }}</p>
-          <p><span class="text-gray-500">Mo‘ljal:</span> {{ detail.orientation || '—' }}</p>
-          <p><span class="text-gray-500">Kuryer:</span> {{ detail.courier?.fullName || '—' }}</p>
-          <p><span class="text-gray-500">Summa:</span> {{ money(detail.totalAmount) }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.id') }}:</span> {{ detail.orderId }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.number') }}:</span> {{ detail.orderNumber || t('common.empty') }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.customer') }}:</span> {{ detail.fullName || t('common.empty') }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.phone') }}:</span> {{ detail.phone || t('common.empty') }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.address') }}:</span> {{ detail.address || t('common.empty') }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.house') }}:</span> {{ detail.house || t('common.empty') }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.entrance') }}:</span> {{ detail.entrance || t('common.empty') }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.apartment') }}:</span> {{ detail.apartment || t('common.empty') }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.floor') }}:</span> {{ detail.floor || t('common.empty') }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.orientation') }}:</span> {{ detail.orientation || t('common.empty') }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.courier') }}:</span> {{ detail.courier?.fullName || t('common.empty') }}</p>
+          <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.amount') }}:</span> {{ money(detail.totalAmount) }}</p>
         </div>
 
         <div class="mb-4 flex flex-wrap items-end gap-2">
-          <AppSelect v-model="newStatus" label="Status" class="min-w-48 flex-1">
-            <option v-for="s in ORDER_STATUSES" :key="s" :value="s">{{ s }}</option>
+          <AppSelect v-model="newStatus" :label="t('common.status')" class="min-w-48 flex-1">
+            <option v-for="s in ORDER_STATUSES" :key="s" :value="s">{{ enumLabel('orderStatus', s) }}</option>
           </AppSelect>
-          <AppButton :loading="statusSaving" @click="saveStatus">Saqlash</AppButton>
+          <AppButton :loading="statusSaving" @click="saveStatus">{{ t('common.save') }}</AppButton>
         </div>
 
-        <h3 class="mb-2 text-theme-sm font-semibold text-gray-800">Mahsulotlar</h3>
-        <div class="overflow-hidden rounded-xl border border-gray-200">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+        <h3 class="mb-2 text-theme-sm font-semibold text-gray-800 dark:text-white/90">{{ t('orders.products') }}</h3>
+        <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+            <thead class="bg-gray-50 dark:bg-white/[0.02]">
               <tr>
-                <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Mahsulot</th>
-                <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Miqdor</th>
-                <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Narx</th>
-                <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Bonus</th>
+                <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.product') }}</th>
+                <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.quantity') }}</th>
+                <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.price') }}</th>
+                <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.bonus') }}</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
               <tr v-for="(item, i) in detail.items || []" :key="i">
-                <td class="px-5 py-3 text-theme-sm text-gray-700">{{ item.productName || item.productId }}</td>
-                <td class="px-5 py-3 text-theme-sm text-gray-700">{{ item.quantity ?? 0 }}</td>
-                <td class="px-5 py-3 text-theme-sm text-gray-700">{{ money(item.productCost) }}</td>
-                <td class="px-5 py-3 text-theme-sm text-gray-700">{{ item.isBonus ? 'Ha' : 'Yo‘q' }}</td>
+                <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ item.productName || item.productId }}</td>
+                <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ item.quantity ?? 0 }}</td>
+                <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(item.productCost) }}</td>
+                <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ item.isBonus ? t('common.yes') : t('common.no') }}</td>
               </tr>
               <tr v-if="!(detail.items && detail.items.length)">
-                <td colspan="4" class="px-5 py-4 text-center text-theme-sm text-gray-500">
-                  Mahsulotlar yo‘q
+                <td colspan="4" class="px-5 py-4 text-center text-theme-sm text-gray-500 dark:text-gray-400">
+                  {{ t('orders.noProducts') }}
                 </td>
               </tr>
             </tbody>

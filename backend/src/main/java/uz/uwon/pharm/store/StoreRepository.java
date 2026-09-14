@@ -12,6 +12,7 @@ import java.util.Optional;
 @Repository
 public interface StoreRepository extends JpaRepository<Store, Long> {
     Optional<Store> findByIdAndStatus(Long id, Status status);
+    Optional<Store> findByProduct_IdAndStatus(Long productId, Status status);
     List<Store> findAllByStatusOrderByIdAsc(Status status);
     List<Store> findByProduct_NameContainingIgnoreCaseAndQuantityGreaterThan(
             String name, BigDecimal quantity

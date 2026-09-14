@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { enumLabel } from '@/i18n'
 import {
   createCustomer,
   createCustomerAddress,
@@ -28,6 +30,7 @@ import type {
 } from '@/types/api'
 import { apiError, statusTone } from '@/utils/format'
 
+const { t } = useI18n()
 const allCustomers = ref<CustomerResponse[]>([])
 const customers = ref<CustomerResponse[]>([])
 const loading = ref(false)
@@ -64,7 +67,7 @@ const addrForm = reactive({
 })
 
 const filteredHint = computed(() =>
-  searchPhone.value.trim() ? `Qidiruv: ${searchPhone.value}` : 'Barcha mijozlar',
+  searchPhone.value.trim() ? t('customers.searchHint', { q: searchPhone.value }) : t('customers.all'),
 )
 
 function resetForm() {
@@ -86,7 +89,7 @@ async function load() {
     allCustomers.value = res.data || []
     customers.value = allCustomers.value
   } catch (e) {
-    error.value = apiError(e, 'Mijozlarni yuklab bo‘lmadi')
+    error.value = apiError(e, 'errors.loadCustomers')
   } finally {
     loading.value = false
   }
@@ -103,7 +106,7 @@ async function onSearch() {
     const res = await searchCustomers(searchPhone.value.trim())
     customers.value = res.data || []
   } catch (e) {
-    error.value = apiError(e, 'Qidiruv amalga oshmadi')
+    error.value = apiError(e, 'errors.searchFailed')
   } finally {
     loading.value = false
   }
@@ -129,7 +132,7 @@ function openEdit(c: CustomerResponse) {
 async function save() {
   formError.value = ''
   if (!form.fullName.trim() || !form.phone.trim()) {
-    formError.value = 'Ism va telefon majburiy'
+    formError.value = t('errors.namePhoneRequired')
     return
   }
   const dto: CustomerDTO = {
@@ -150,19 +153,19 @@ async function save() {
     modalOpen.value = false
     await load()
   } catch (e) {
-    formError.value = apiError(e, 'Saqlab bo‘lmadi')
+    formError.value = apiError(e, 'errors.saveFailed')
   } finally {
     saving.value = false
   }
 }
 
 async function onDelete(c: CustomerResponse) {
-  if (!confirm(`${c.fullName} o‘chirilsinmi?`)) return
+  if (!confirm(t('common.confirmDeleteNamed', { name: c.fullName }))) return
   try {
     await deleteCustomer(c.id)
     await load()
   } catch (e) {
-    error.value = apiError(e, 'O‘chirib bo‘lmadi')
+    error.value = apiError(e, 'errors.deleteFailed')
   }
 }
 
@@ -181,7 +184,7 @@ async function openAddresses(c: CustomerResponse) {
     const res = await fetchCustomerAddresses(c.id)
     addresses.value = res.data || []
   } catch (e) {
-    addrError.value = apiError(e, 'Manzillarni yuklab bo‘lmadi')
+    addrError.value = apiError(e, 'errors.loadAddresses')
   } finally {
     addrLoading.value = false
   }
@@ -190,7 +193,7 @@ async function openAddresses(c: CustomerResponse) {
 async function addAddress() {
   if (!addrCustomer.value) return
   if (!addrForm.fullAddress.trim()) {
-    addrError.value = 'To‘liq manzil majburiy'
+    addrError.value = t('errors.fullAddressRequired')
     return
   }
   const dto: AddressDTO = {
@@ -214,14 +217,14 @@ async function addAddress() {
     addrForm.floor = ''
     addrForm.orientation = ''
   } catch (e) {
-    addrError.value = apiError(e, 'Manzil qo‘shilmadi')
+    addrError.value = apiError(e, 'errors.addAddressFailed')
   } finally {
     addrSaving.value = false
   }
 }
 
 async function removeAddress(a: AddressResponse) {
-  if (!confirm('Manzil o‘chirilsinmi?')) return
+  if (!confirm(t('common.confirmDeleteAddress'))) return
   try {
     await deleteAddress(a.id)
     if (addrCustomer.value) {
@@ -229,7 +232,7 @@ async function removeAddress(a: AddressResponse) {
       addresses.value = res.data || []
     }
   } catch (e) {
-    addrError.value = apiError(e, 'Manzilni o‘chirib bo‘lmadi')
+    addrError.value = apiError(e, 'errors.deleteAddress')
   }
 }
 
@@ -238,21 +241,21 @@ onMounted(load)
 
 <template>
   <div>
-    <PageHeader title="Mijozlar" :subtitle="filteredHint">
+    <PageHeader :title="t('customers.title')" :subtitle="filteredHint">
       <template #actions>
-        <AppButton @click="openCreate">Qo‘shish</AppButton>
+        <AppButton @click="openCreate">{{ t('common.add') }}</AppButton>
       </template>
     </PageHeader>
 
-    <div class="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-theme-xs">
+    <div class="mb-4 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4 shadow-theme-xs">
       <div class="flex flex-wrap items-end gap-2">
         <AppInput
           v-model="searchPhone"
           class="min-w-64 flex-1"
-          label="Telefon bo‘yicha qidirish"
+          :label="t('customers.searchByPhone')"
           placeholder="+998..."
         />
-        <AppButton @click="onSearch">Qidirish</AppButton>
+        <AppButton @click="onSearch">{{ t('common.search') }}</AppButton>
         <AppButton
           variant="secondary"
           @click="
@@ -260,43 +263,43 @@ onMounted(load)
             customers = allCustomers
           "
         >
-          Tozalash
+          {{ t('common.clear') }}
         </AppButton>
       </div>
     </div>
 
     <div
       v-if="error"
-      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
     >
       {{ error }}
     </div>
 
     <DataTable
       :loading="loading"
-      :empty="!loading && !customers.length ? 'Mijozlar topilmadi' : undefined"
+      :empty="!loading && !customers.length ? t('customers.notFound') : undefined"
     >
       <template #head>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Ism</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Telefon</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Jins</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Tur</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Status</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Amallar</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('customers.fullName') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.phone') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('customers.gender') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('customers.type') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.status') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.actions') }}</th>
       </template>
       <tr v-for="c in customers" :key="c.id">
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ c.fullName }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ c.phone }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ c.gender || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ c.type || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
-          <AppBadge :tone="statusTone(c.status)">{{ c.status || '—' }}</AppBadge>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ c.fullName }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ c.phone }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ enumLabel('gender', c.gender, t('common.empty')) }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ enumLabel('customerType', c.type, t('common.empty')) }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
+          <AppBadge :tone="statusTone(c.status)">{{ enumLabel('status', c.status, t('common.empty')) }}</AppBadge>
         </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <div class="flex flex-wrap gap-2">
-            <AppButton size="sm" variant="secondary" @click="openEdit(c)">Tahrir</AppButton>
-            <AppButton size="sm" variant="ghost" @click="openAddresses(c)">Manzillar</AppButton>
-            <AppButton size="sm" variant="danger" @click="onDelete(c)">O‘chirish</AppButton>
+            <AppButton size="sm" variant="secondary" @click="openEdit(c)">{{ t('common.edit') }}</AppButton>
+            <AppButton size="sm" variant="ghost" @click="openAddresses(c)">{{ t('customers.addresses') }}</AppButton>
+            <AppButton size="sm" variant="danger" @click="onDelete(c)">{{ t('common.delete') }}</AppButton>
           </div>
         </td>
       </tr>
@@ -304,80 +307,84 @@ onMounted(load)
 
     <AppModal
       :open="modalOpen"
-      :title="editingId ? 'Mijozni tahrirlash' : 'Yangi mijoz'"
+      :title="editingId ? t('customers.editTitle') : t('customers.createTitle')"
       @close="modalOpen = false"
     >
       <div
         v-if="formError"
-        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
       >
         {{ formError }}
       </div>
       <form class="space-y-3" @submit.prevent="save">
-        <AppInput v-model="form.fullName" label="To‘liq ism" />
-        <AppInput v-model="form.phone" label="Telefon" />
-        <AppInput v-model="form.birthDate" label="Tug‘ilgan sana" type="date" />
-        <AppSelect v-model="form.gender" label="Jins">
-          <option value="MALE">Erkak</option>
-          <option value="FEMALE">Ayol</option>
-          <option value="NOT_SELECTED">Ko‘rsatilmagan</option>
+        <AppInput v-model="form.fullName" :label="t('orders.fullName')" />
+        <AppInput v-model="form.phone" :label="t('common.phone')" />
+        <AppInput v-model="form.birthDate" :label="t('customers.birthDate')" type="date" />
+        <AppSelect v-model="form.gender" :label="t('customers.gender')">
+          <option value="MALE">{{ enumLabel('gender', 'MALE') }}</option>
+          <option value="FEMALE">{{ enumLabel('gender', 'FEMALE') }}</option>
+          <option value="NOT_SELECTED">{{ enumLabel('gender', 'NOT_SELECTED') }}</option>
         </AppSelect>
-        <AppSelect v-model="form.type" label="Mijoz turi">
-          <option value="B2C">B2C</option>
-          <option value="B2B">B2B</option>
+        <AppSelect v-model="form.type" :label="t('customers.customerType')">
+          <option value="B2C">{{ enumLabel('customerType', 'B2C') }}</option>
+          <option value="B2B">{{ enumLabel('customerType', 'B2B') }}</option>
         </AppSelect>
-        <AppTextarea v-model="form.description" label="Izoh" />
+        <AppTextarea v-model="form.description" :label="t('common.comment')" />
         <div class="flex justify-end gap-2 pt-2">
-          <AppButton type="button" variant="secondary" @click="modalOpen = false">Bekor</AppButton>
-          <AppButton type="submit" :loading="saving">Saqlash</AppButton>
+          <AppButton type="button" variant="secondary" @click="modalOpen = false">{{ t('common.cancel') }}</AppButton>
+          <AppButton type="submit" :loading="saving">{{ t('common.save') }}</AppButton>
         </div>
       </form>
     </AppModal>
 
     <AppModal
       :open="addrOpen"
-      :title="`Manzillar — ${addrCustomer?.fullName || ''}`"
+      :title="t('customers.addressesTitle', { name: addrCustomer?.fullName || '' })"
       @close="addrOpen = false"
     >
       <div
         v-if="addrError"
-        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
       >
         {{ addrError }}
       </div>
 
-      <div v-if="addrLoading" class="mb-4 text-theme-sm text-gray-500">Yuklanmoqda...</div>
+      <div v-if="addrLoading" class="mb-4 text-theme-sm text-gray-500 dark:text-gray-400">{{ t('common.loading') }}</div>
       <div v-else class="mb-4 space-y-2">
         <div
           v-for="a in addresses"
           :key="a.id"
-          class="flex items-start justify-between gap-3 rounded-xl border border-gray-200 px-4 py-3"
+          class="flex items-start justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3"
         >
           <div class="text-theme-sm text-gray-700">
             <p class="font-medium">{{ a.fullAddress }}</p>
-            <p class="mt-1 text-gray-500">
-              Uy: {{ a.home || '—' }} · Podyezd: {{ a.entrance || '—' }} · Xonadon:
-              {{ a.apartment || '—' }} · Qavat: {{ a.floor || '—' }}
+            <p class="mt-1 text-gray-500 dark:text-gray-400">
+              {{ t('customers.houseLine', {
+                home: a.home || t('common.empty'),
+                entrance: a.entrance || t('common.empty'),
+                apartment: a.apartment || t('common.empty'),
+                floor: a.floor || t('common.empty'),
+              }) }}
             </p>
-            <p v-if="a.orientation" class="text-gray-500">Mo‘ljal: {{ a.orientation }}</p>
+            <p v-if="a.orientation" class="text-gray-500 dark:text-gray-400">{{ t('customers.orientationLine', { value: a.orientation }) }}</p>
           </div>
-          <AppButton size="sm" variant="danger" @click="removeAddress(a)">O‘chirish</AppButton>
+          <AppButton size="sm" variant="danger" @click="removeAddress(a)">{{ t('common.delete') }}</AppButton>
         </div>
-        <p v-if="!addresses.length" class="text-theme-sm text-gray-500">Manzillar yo‘q</p>
+        <p v-if="!addresses.length" class="text-theme-sm text-gray-500 dark:text-gray-400">{{ t('customers.noAddresses') }}</p>
       </div>
 
-      <h3 class="mb-2 text-theme-sm font-semibold text-gray-800">Yangi manzil</h3>
+      <h3 class="mb-2 text-theme-sm font-semibold text-gray-800 dark:text-white/90">{{ t('customers.newAddress') }}</h3>
       <div class="space-y-3">
-        <AppInput v-model="addrForm.fullAddress" label="To‘liq manzil" />
+        <AppInput v-model="addrForm.fullAddress" :label="t('customers.fullAddress')" />
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <AppInput v-model="addrForm.home" label="Uy" />
-          <AppInput v-model="addrForm.entrance" label="Podyezd" />
-          <AppInput v-model="addrForm.apartment" label="Xonadon" />
-          <AppInput v-model="addrForm.floor" label="Qavat" />
+          <AppInput v-model="addrForm.home" :label="t('common.house')" />
+          <AppInput v-model="addrForm.entrance" :label="t('common.entrance')" />
+          <AppInput v-model="addrForm.apartment" :label="t('common.apartment')" />
+          <AppInput v-model="addrForm.floor" :label="t('common.floor')" />
         </div>
-        <AppInput v-model="addrForm.orientation" label="Mo‘ljal" />
+        <AppInput v-model="addrForm.orientation" :label="t('common.orientation')" />
         <div class="flex justify-end">
-          <AppButton :loading="addrSaving" @click="addAddress">Qo‘shish</AppButton>
+          <AppButton :loading="addrSaving" @click="addAddress">{{ t('common.add') }}</AppButton>
         </div>
       </div>
     </AppModal>

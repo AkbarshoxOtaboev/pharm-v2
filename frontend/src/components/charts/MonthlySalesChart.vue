@@ -1,17 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import VueApexCharts from 'vue3-apexcharts'
+import { useTheme } from '@/composables/useTheme'
+import { intlLocale, type AppLocale } from '@/i18n'
 
 const props = defineProps<{
   seriesData: number[]
   year?: number
 }>()
 
-const categories = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const { t, locale } = useI18n()
+const { theme } = useTheme()
+const isDark = computed(() => theme.value === 'dark')
+const tickColor = computed(() => (isDark.value ? '#98A2B3' : '#6B7280'))
+const gridColor = computed(() => (isDark.value ? '#344054' : '#E5E7EB'))
+
+const categories = computed(() =>
+  Array.from({ length: 12 }, (_, i) => t(`months.${i}`)),
+)
 
 const series = computed(() => [
   {
-    name: 'Sotuv',
+    name: t('dashboard.sales'),
     data: props.seriesData.length === 12 ? props.seriesData : Array(12).fill(0),
   },
 ])
@@ -23,6 +34,8 @@ const chartOptions = computed(() => ({
     type: 'bar',
     height: 220,
     toolbar: { show: false },
+    background: 'transparent',
+    foreColor: tickColor.value,
   },
   plotOptions: {
     bar: {
@@ -39,12 +52,12 @@ const chartOptions = computed(() => ({
     colors: ['transparent'],
   },
   xaxis: {
-    categories,
+    categories: categories.value,
     axisBorder: { show: false },
     axisTicks: { show: false },
     labels: {
       style: {
-        colors: '#6B7280',
+        colors: tickColor.value,
         fontSize: '12px',
       },
     },
@@ -52,7 +65,7 @@ const chartOptions = computed(() => ({
   yaxis: {
     labels: {
       style: {
-        colors: '#6B7280',
+        colors: tickColor.value,
         fontSize: '12px',
       },
       formatter: (val: number) => {
@@ -65,24 +78,26 @@ const chartOptions = computed(() => ({
   legend: { show: false },
   grid: {
     yaxis: { lines: { show: true } },
-    borderColor: '#E5E7EB',
+    borderColor: gridColor.value,
   },
   fill: { opacity: 1 },
+  theme: { mode: isDark.value ? 'dark' : 'light' },
   tooltip: {
+    theme: isDark.value ? 'dark' : 'light',
     y: {
       formatter: (val: number) =>
-        new Intl.NumberFormat('uz-UZ').format(val || 0),
+        new Intl.NumberFormat(intlLocale(locale.value as AppLocale)).format(val || 0),
     },
   },
 }))
 </script>
 
 <template>
-  <div class="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 shadow-theme-xs sm:px-6 sm:pt-6">
+  <div class="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 shadow-theme-xs sm:px-6 sm:pt-6 dark:border-gray-800 dark:bg-white/[0.03]">
     <div class="mb-4">
-      <h3 class="text-lg font-semibold text-gray-800">Oylik sotuvlar</h3>
-      <p class="mt-1 text-theme-sm text-gray-500">
-        {{ year || new Date().getFullYear() }}-yil yetkazilgan buyurtmalar summasi
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ t('dashboard.monthlySales') }}</h3>
+      <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400">
+        {{ t('dashboard.monthlySalesHint', { year: year || new Date().getFullYear() }) }}
       </p>
     </div>
     <div class="max-w-full overflow-x-auto custom-scrollbar">

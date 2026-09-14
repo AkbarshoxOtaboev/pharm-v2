@@ -1,4 +1,4 @@
-import api from './axios'
+import api, { plainApi } from './axios'
 import type { ApiResponse, AuthResponse, MeResponse } from '@/types/api'
 
 export async function login(username: string, password: string) {
@@ -36,8 +36,9 @@ export async function logout() {
   await api.post('/auth/logout')
 }
 
+/** Uses plainApi so 401 interceptor does not recurse. */
 export async function refresh(refreshToken: string) {
-  const { data } = await api.post<ApiResponse<AuthResponse>>(
+  const { data } = await plainApi.post<ApiResponse<AuthResponse>>(
     `/auth/refresh?refreshToken=${encodeURIComponent(refreshToken)}`,
   )
   return data

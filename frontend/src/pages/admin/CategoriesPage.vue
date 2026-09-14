@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { enumLabel } from '@/i18n'
 import {
   createCategory,
   createSubcategory,
@@ -20,6 +22,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import type { CategoryResponse, SubCategoryResponse } from '@/types/api'
 import { apiError, statusTone } from '@/utils/format'
 
+const { t } = useI18n()
 const categories = ref<CategoryResponse[]>([])
 const loading = ref(false)
 const error = ref('')
@@ -46,7 +49,7 @@ async function load() {
     const res = await fetchCategories()
     categories.value = res.data || []
   } catch (e) {
-    error.value = apiError(e, 'Kategoriyalarni yuklab bo‘lmadi')
+    error.value = apiError(e, 'errors.loadCategories')
   } finally {
     loading.value = false
   }
@@ -70,7 +73,7 @@ function openEditCat(c: CategoryResponse) {
 
 async function saveCat() {
   if (!catForm.name.trim()) {
-    catError.value = 'Nom majburiy'
+    catError.value = t('errors.nameRequired')
     return
   }
   catSaving.value = true
@@ -85,19 +88,19 @@ async function saveCat() {
     catModal.value = false
     await load()
   } catch (e) {
-    catError.value = apiError(e, 'Saqlab bo‘lmadi')
+    catError.value = apiError(e, 'errors.saveFailed')
   } finally {
     catSaving.value = false
   }
 }
 
 async function onDeleteCat(c: CategoryResponse) {
-  if (!confirm(`${c.name} o‘chirilsinmi?`)) return
+  if (!confirm(t('common.confirmDeleteNamed', { name: c.name }))) return
   try {
     await deleteCategory(c.id)
     await load()
   } catch (e) {
-    error.value = apiError(e, 'O‘chirib bo‘lmadi')
+    error.value = apiError(e, 'errors.deleteFailed')
   }
 }
 
@@ -113,7 +116,7 @@ async function openSubs(c: CategoryResponse) {
     const res = await fetchSubcategories(c.id)
     subs.value = res.data || []
   } catch (e) {
-    subError.value = apiError(e, 'Subkategoriyalarni yuklab bo‘lmadi')
+    subError.value = apiError(e, 'errors.loadSubcategories')
   } finally {
     subLoading.value = false
   }
@@ -134,7 +137,7 @@ function cancelSubEdit() {
 async function saveSub() {
   if (!subCategory.value) return
   if (!subForm.name.trim()) {
-    subError.value = 'Nom majburiy'
+    subError.value = t('errors.nameRequired')
     return
   }
   subSaving.value = true
@@ -155,14 +158,14 @@ async function saveSub() {
     subs.value = res.data || []
     await load()
   } catch (e) {
-    subError.value = apiError(e, 'Saqlab bo‘lmadi')
+    subError.value = apiError(e, 'errors.saveFailed')
   } finally {
     subSaving.value = false
   }
 }
 
 async function removeSub(s: SubCategoryResponse) {
-  if (!confirm(`${s.name} o‘chirilsinmi?`)) return
+  if (!confirm(t('common.confirmDeleteNamed', { name: s.name }))) return
   try {
     await deleteSubcategory(s.id)
     if (subCategory.value) {
@@ -171,7 +174,7 @@ async function removeSub(s: SubCategoryResponse) {
       await load()
     }
   } catch (e) {
-    subError.value = apiError(e, 'O‘chirib bo‘lmadi')
+    subError.value = apiError(e, 'errors.deleteFailed')
   }
 }
 
@@ -180,42 +183,42 @@ onMounted(load)
 
 <template>
   <div>
-    <PageHeader title="Kategoriyalar" subtitle="Kategoriya va subkategoriyalar">
+    <PageHeader :title="t('categories.title')" :subtitle="t('categories.subtitle')">
       <template #actions>
-        <AppButton @click="openCreateCat">Qo‘shish</AppButton>
+        <AppButton @click="openCreateCat">{{ t('common.add') }}</AppButton>
       </template>
     </PageHeader>
 
     <div
       v-if="error"
-      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
     >
       {{ error }}
     </div>
 
     <DataTable
       :loading="loading"
-      :empty="!loading && !categories.length ? 'Kategoriyalar yo‘q' : undefined"
+      :empty="!loading && !categories.length ? t('categories.empty') : undefined"
     >
       <template #head>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Nom</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Tavsif</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Sub</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Status</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Amallar</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.name') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.description') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('categories.sub') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.status') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.actions') }}</th>
       </template>
       <tr v-for="c in categories" :key="c.id">
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ c.name }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ c.description || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ c.subcategoryCount ?? 0 }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
-          <AppBadge :tone="statusTone(c.status)">{{ c.status || '—' }}</AppBadge>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ c.name }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ c.description || t('common.empty') }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ c.subcategoryCount ?? 0 }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
+          <AppBadge :tone="statusTone(c.status)">{{ enumLabel('status', c.status, t('common.empty')) }}</AppBadge>
         </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <div class="flex flex-wrap gap-2">
-            <AppButton size="sm" variant="secondary" @click="openEditCat(c)">Tahrir</AppButton>
-            <AppButton size="sm" variant="ghost" @click="openSubs(c)">Subkategoriyalar</AppButton>
-            <AppButton size="sm" variant="danger" @click="onDeleteCat(c)">O‘chirish</AppButton>
+            <AppButton size="sm" variant="secondary" @click="openEditCat(c)">{{ t('common.edit') }}</AppButton>
+            <AppButton size="sm" variant="ghost" @click="openSubs(c)">{{ t('categories.subcategories') }}</AppButton>
+            <AppButton size="sm" variant="danger" @click="onDeleteCat(c)">{{ t('common.delete') }}</AppButton>
           </div>
         </td>
       </tr>
@@ -223,67 +226,67 @@ onMounted(load)
 
     <AppModal
       :open="catModal"
-      :title="editingCatId ? 'Kategoriyani tahrirlash' : 'Yangi kategoriya'"
+      :title="editingCatId ? t('categories.editTitle') : t('categories.createTitle')"
       @close="catModal = false"
     >
       <div
         v-if="catError"
-        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
       >
         {{ catError }}
       </div>
       <form class="space-y-3" @submit.prevent="saveCat">
-        <AppInput v-model="catForm.name" label="Nom" />
-        <AppTextarea v-model="catForm.description" label="Tavsif" />
+        <AppInput v-model="catForm.name" :label="t('common.name')" />
+        <AppTextarea v-model="catForm.description" :label="t('common.description')" />
         <div class="flex justify-end gap-2">
-          <AppButton type="button" variant="secondary" @click="catModal = false">Bekor</AppButton>
-          <AppButton type="submit" :loading="catSaving">Saqlash</AppButton>
+          <AppButton type="button" variant="secondary" @click="catModal = false">{{ t('common.cancel') }}</AppButton>
+          <AppButton type="submit" :loading="catSaving">{{ t('common.save') }}</AppButton>
         </div>
       </form>
     </AppModal>
 
     <AppModal
       :open="subOpen"
-      :title="`Subkategoriyalar — ${subCategory?.name || ''}`"
+      :title="t('categories.subcategoriesTitle', { name: subCategory?.name || '' })"
       @close="subOpen = false"
     >
       <div
         v-if="subError"
-        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
       >
         {{ subError }}
       </div>
 
-      <div v-if="subLoading" class="mb-4 text-theme-sm text-gray-500">Yuklanmoqda...</div>
+      <div v-if="subLoading" class="mb-4 text-theme-sm text-gray-500 dark:text-gray-400">{{ t('common.loading') }}</div>
       <div v-else class="mb-4 space-y-2">
         <div
           v-for="s in subs"
           :key="s.id"
-          class="flex items-start justify-between gap-3 rounded-xl border border-gray-200 px-4 py-3"
+          class="flex items-start justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3"
         >
           <div>
-            <p class="text-theme-sm font-medium text-gray-800">{{ s.name }}</p>
-            <p class="text-theme-xs text-gray-500">{{ s.description || '—' }}</p>
+            <p class="text-theme-sm font-medium text-gray-800 dark:text-white/90">{{ s.name }}</p>
+            <p class="text-theme-xs text-gray-500 dark:text-gray-400">{{ s.description || t('common.empty') }}</p>
           </div>
           <div class="flex gap-2">
-            <AppButton size="sm" variant="secondary" @click="editSub(s)">Tahrir</AppButton>
-            <AppButton size="sm" variant="danger" @click="removeSub(s)">O‘chirish</AppButton>
+            <AppButton size="sm" variant="secondary" @click="editSub(s)">{{ t('common.edit') }}</AppButton>
+            <AppButton size="sm" variant="danger" @click="removeSub(s)">{{ t('common.delete') }}</AppButton>
           </div>
         </div>
-        <p v-if="!subs.length" class="text-theme-sm text-gray-500">Subkategoriyalar yo‘q</p>
+        <p v-if="!subs.length" class="text-theme-sm text-gray-500 dark:text-gray-400">{{ t('categories.noSubs') }}</p>
       </div>
 
-      <h3 class="mb-2 text-theme-sm font-semibold text-gray-800">
-        {{ editingSubId ? 'Tahrirlash' : 'Yangi subkategoriya' }}
+      <h3 class="mb-2 text-theme-sm font-semibold text-gray-800 dark:text-white/90">
+        {{ editingSubId ? t('categories.editSub') : t('categories.newSub') }}
       </h3>
       <div class="space-y-3">
-        <AppInput v-model="subForm.name" label="Nom" />
-        <AppTextarea v-model="subForm.description" label="Tavsif" />
+        <AppInput v-model="subForm.name" :label="t('common.name')" />
+        <AppTextarea v-model="subForm.description" :label="t('common.description')" />
         <div class="flex justify-end gap-2">
           <AppButton v-if="editingSubId" type="button" variant="secondary" @click="cancelSubEdit">
-            Bekor
+            {{ t('common.cancel') }}
           </AppButton>
-          <AppButton :loading="subSaving" @click="saveSub">Saqlash</AppButton>
+          <AppButton :loading="subSaving" @click="saveSub">{{ t('common.save') }}</AppButton>
         </div>
       </div>
     </AppModal>

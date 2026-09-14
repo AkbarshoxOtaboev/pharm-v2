@@ -7,7 +7,7 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET:pharm-v2-dev-secret-key-change-in-production-32chars}
-    access-token-ms: 86400000
+    access-token-ms: 900000
     refresh-token-ms: 604800000
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}

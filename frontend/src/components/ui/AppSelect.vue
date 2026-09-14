@@ -9,11 +9,11 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
 
 <template>
   <label class="block space-y-1.5">
-    <span v-if="label" class="text-theme-sm font-medium text-gray-700">{{ label }}</span>
+    <span v-if="label" class="text-theme-sm font-medium text-gray-700 dark:text-gray-300">{{ label }}</span>
     <select
       :value="modelValue"
       :disabled="disabled"
-      class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 disabled:bg-gray-50"
+      class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-theme-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 disabled:bg-gray-50 dark:border-gray-700 dark:text-white/90 dark:disabled:bg-white/5"
       @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
     >
       <slot />

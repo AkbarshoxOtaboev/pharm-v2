@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchSaleLogs } from '@/api/saleLogs.api'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
@@ -8,6 +9,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import type { SaleLogResponse } from '@/types/api'
 import { apiError, money } from '@/utils/format'
 
+const { t } = useI18n()
 const logs = ref<SaleLogResponse[]>([])
 const loading = ref(false)
 const error = ref('')
@@ -24,7 +26,7 @@ async function load() {
     })
     logs.value = res.data || []
   } catch (e) {
-    error.value = apiError(e, 'Sotuv loglarini yuklab bo‘lmadi')
+    error.value = apiError(e, 'errors.loadSaleLogs')
   } finally {
     loading.value = false
   }
@@ -35,13 +37,13 @@ onMounted(load)
 
 <template>
   <div>
-    <PageHeader title="Sotuv loglari" subtitle="Mahsulot sotuvlari tarixi" />
+    <PageHeader :title="t('saleLogs.title')" :subtitle="t('saleLogs.subtitle')" />
 
-    <div class="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-theme-xs">
+    <div class="mb-4 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4 shadow-theme-xs">
       <div class="flex flex-wrap items-end gap-2">
-        <AppInput v-model="from" label="Dan" type="date" />
-        <AppInput v-model="to" label="Gacha" type="date" />
-        <AppButton @click="load">Filtrlash</AppButton>
+        <AppInput v-model="from" :label="t('common.from')" type="date" />
+        <AppInput v-model="to" :label="t('common.to')" type="date" />
+        <AppButton @click="load">{{ t('common.filter') }}</AppButton>
         <AppButton
           variant="secondary"
           @click="
@@ -50,41 +52,41 @@ onMounted(load)
             load()
           "
         >
-          Tozalash
+          {{ t('common.clear') }}
         </AppButton>
       </div>
     </div>
 
     <div
       v-if="error"
-      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
     >
       {{ error }}
     </div>
 
     <DataTable
       :loading="loading"
-      :empty="!loading && !logs.length ? 'Loglar topilmadi' : undefined"
+      :empty="!loading && !logs.length ? t('saleLogs.notFound') : undefined"
     >
       <template #head>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Sana</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Buyurtma</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Mijoz</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Telefon</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Mahsulot</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Miqdor</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Summa</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Bonus</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.date') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.order') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.customer') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.phone') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.product') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.quantity') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.amount') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.bonus') }}</th>
       </template>
       <tr v-for="(row, idx) in logs" :key="row.orderId + '-' + idx">
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ row.createdAt || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ row.orderId || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ row.customerName || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ row.customerPhone || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ row.productName || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ row.quantity ?? 0 }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ money(row.totalSum) }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ row.isBonus ? 'Ha' : 'Yo‘q' }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ row.createdAt || t('common.empty') }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ row.orderId || t('common.empty') }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ row.customerName || t('common.empty') }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ row.customerPhone || t('common.empty') }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ row.productName || t('common.empty') }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ row.quantity ?? 0 }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(row.totalSum) }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ row.isBonus ? t('common.yes') : t('common.no') }}</td>
       </tr>
     </DataTable>
   </div>

@@ -5,7 +5,7 @@ defineProps<{ name: string; active?: boolean }>()
 <template>
   <svg
     class="size-5 shrink-0"
-    :class="active ? 'text-brand-500' : 'text-gray-500 group-hover:text-gray-700'"
+    :class="active ? 'text-brand-500' : 'text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-200'"
     viewBox="0 0 24 24"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"

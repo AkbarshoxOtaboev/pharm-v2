@@ -10,4 +10,6 @@ public interface OrderStatResponse {
 
     BigDecimal getDailyDeliveredOrdersTotalSum();
     BigDecimal getMonthlyDeliveredOrdersTotalSum();
+    BigDecimal getDeliveredOrdersTotalSum();
+    BigDecimal getCancelledOrdersTotalSum();
 }

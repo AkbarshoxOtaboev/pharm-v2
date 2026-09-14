@@ -11,12 +11,12 @@ defineEmits<{ close: [] }>()
     >
       <div class="absolute inset-0 bg-gray-900/40" @click="$emit('close')" />
       <div
-        class="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-md"
+        class="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-md dark:border-gray-800 dark:bg-gray-dark"
       >
         <div class="mb-4 flex items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold text-gray-800">{{ title }}</h2>
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ title }}</h2>
           <button
-            class="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+            class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
             type="button"
             @click="$emit('close')"
           >

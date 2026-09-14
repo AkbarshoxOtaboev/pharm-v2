@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { enumLabel } from '@/i18n'
 import { createOrder } from '@/api/orders.api'
 import { searchCustomers } from '@/api/customers.api'
 import { fetchProductsInStock } from '@/api/products.api'
@@ -26,6 +28,7 @@ interface LineItem {
   isBonus: boolean
 }
 
+const { t } = useI18n()
 const router = useRouter()
 const saving = ref(false)
 const error = ref('')
@@ -66,7 +69,7 @@ async function loadLookups() {
     couriers.value = cRes.data || []
     products.value = pRes.data || []
   } catch (e) {
-    error.value = apiError(e, 'Maʼlumotlarni yuklab bo‘lmadi')
+    error.value = apiError(e, 'errors.loadData')
   }
 }
 
@@ -81,7 +84,7 @@ async function searchByPhone() {
       selectCustomer(customers.value[0])
     }
   } catch (e) {
-    error.value = apiError(e, 'Mijozni qidirib bo‘lmadi')
+    error.value = apiError(e, 'errors.searchCustomer')
   } finally {
     searching.value = false
   }
@@ -122,11 +125,11 @@ async function submit() {
     }))
 
   if (!mapped.length) {
-    error.value = 'Kamida bitta mahsulot qo‘shing'
+    error.value = t('errors.minOneProduct')
     return
   }
   if (!phone.value.trim() || !fullName.value.trim()) {
-    error.value = 'Mijoz ismi va telefon majburiy'
+    error.value = t('errors.customerNamePhoneRequired')
     return
   }
 
@@ -148,10 +151,10 @@ async function submit() {
   saving.value = true
   try {
     await createOrder(dto)
-    success.value = 'Buyurtma yaratildi'
+    success.value = t('orders.created')
     setTimeout(() => router.push('/admin/orders'), 600)
   } catch (e) {
-    error.value = apiError(e, 'Buyurtmani yaratib bo‘lmadi')
+    error.value = apiError(e, 'errors.createOrder')
   } finally {
     saving.value = false
   }
@@ -162,69 +165,69 @@ onMounted(loadLookups)
 
 <template>
   <div>
-    <PageHeader title="Yangi buyurtma" subtitle="Mijoz, manzil va mahsulotlar">
+    <PageHeader :title="t('orders.newOrder')" :subtitle="t('orders.createSubtitle')">
       <template #actions>
-        <AppButton variant="secondary" @click="router.push('/admin/orders')">Orqaga</AppButton>
+        <AppButton variant="secondary" @click="router.push('/admin/orders')">{{ t('common.back') }}</AppButton>
       </template>
     </PageHeader>
 
     <div
       v-if="error"
-      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
     >
       {{ error }}
     </div>
     <div
       v-if="success"
-      class="mb-4 rounded-xl border border-success-100 bg-success-50 px-4 py-3 text-theme-sm text-success-700"
+      class="mb-4 rounded-xl border border-success-100 bg-success-50 px-4 py-3 text-theme-sm text-success-700 dark:border-success-500/20 dark:bg-success-500/10"
     >
       {{ success }}
     </div>
 
     <form class="space-y-4" @submit.prevent="submit">
-      <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs">
-        <h2 class="mb-3 text-lg font-semibold text-gray-800">Mijoz qidirish</h2>
+      <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-5 shadow-theme-xs">
+        <h2 class="mb-3 text-lg font-semibold text-gray-800 dark:text-white/90">{{ t('orders.searchCustomer') }}</h2>
         <div class="flex flex-wrap items-end gap-2">
           <AppInput
             v-model="phoneQuery"
             class="min-w-64 flex-1"
-            label="Telefon bo‘yicha"
+            :label="t('orders.byPhone')"
             placeholder="+998..."
           />
-          <AppButton type="button" :loading="searching" @click="searchByPhone">Qidirish</AppButton>
+          <AppButton type="button" :loading="searching" @click="searchByPhone">{{ t('common.search') }}</AppButton>
         </div>
         <div v-if="customers.length" class="mt-3 space-y-2">
           <button
             v-for="c in customers"
             :key="c.id"
             type="button"
-            class="flex w-full items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-left text-theme-sm hover:bg-gray-50"
-            :class="selectedCustomer?.id === c.id ? 'border-brand-300 bg-brand-50' : ''"
+            class="flex w-full items-center justify-between rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3 text-left text-theme-sm hover:bg-gray-50 dark:hover:bg-white/5"
+            :class="selectedCustomer?.id === c.id ? 'border-brand-300 bg-brand-50 dark:border-brand-500/40 dark:bg-brand-500/10' : ''"
             @click="selectCustomer(c)"
           >
             <span>{{ c.fullName }} — {{ c.phone }}</span>
-            <span class="text-gray-400">#{{ c.id }}</span>
+            <span class="text-gray-400 dark:text-gray-500">#{{ c.id }}</span>
           </button>
         </div>
       </div>
 
-      <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs">
-        <h2 class="mb-3 text-lg font-semibold text-gray-800">Mijoz va manzil</h2>
+      <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-5 shadow-theme-xs">
+        <h2 class="mb-3 text-lg font-semibold text-gray-800 dark:text-white/90">{{ t('orders.customerAndAddress') }}</h2>
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <AppInput v-model="fullName" label="To‘liq ism" />
-          <AppInput v-model="phone" label="Telefon" />
-          <AppInput v-model="address" label="Manzil" class="md:col-span-2" />
-          <AppInput v-model="home" label="Uy" />
-          <AppInput v-model="entrance" label="Podyezd" />
-          <AppInput v-model="apartment" label="Xonadon" />
-          <AppInput v-model="floor" label="Qavat" />
-          <AppInput v-model="orientations" label="Mo‘ljal" class="md:col-span-2" />
-          <AppSelect v-model="paymentType" label="To‘lov turi">
-            <option value="CASH">Naqd</option>
-            <option value="CARD">Karta</option>
+          <AppInput v-model="fullName" :label="t('orders.fullName')" />
+          <AppInput v-model="phone" :label="t('common.phone')" />
+          <AppInput v-model="address" :label="t('common.address')" class="md:col-span-2" />
+          <AppInput v-model="home" :label="t('common.house')" />
+          <AppInput v-model="entrance" :label="t('common.entrance')" />
+          <AppInput v-model="apartment" :label="t('common.apartment')" />
+          <AppInput v-model="floor" :label="t('common.floor')" />
+          <AppInput v-model="orientations" :label="t('common.orientation')" class="md:col-span-2" />
+          <AppSelect v-model="paymentType" :label="t('orders.paymentType')">
+            <option value="CASH">{{ enumLabel('paymentType', 'CASH') }}</option>
+            <option value="CARD">{{ enumLabel('paymentType', 'CARD') }}</option>
           </AppSelect>
-          <AppSelect v-model="courierId" label="Kuryer">
-            <option value="">Tanlanmagan</option>
+          <AppSelect v-model="courierId" :label="t('common.courier')">
+            <option value="">{{ t('common.notSelected') }}</option>
             <option v-for="c in couriers" :key="c.id" :value="String(c.id)">
               {{ c.fullName }}
             </option>
@@ -232,11 +235,11 @@ onMounted(loadLookups)
         </div>
       </div>
 
-      <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs">
+      <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-5 shadow-theme-xs">
         <div class="mb-3 flex items-center justify-between gap-2">
-          <h2 class="text-lg font-semibold text-gray-800">Mahsulotlar</h2>
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ t('orders.products') }}</h2>
           <AppButton type="button" size="sm" variant="secondary" @click="addItem">
-            Qo‘shish
+            {{ t('common.add') }}
           </AppButton>
         </div>
 
@@ -244,24 +247,24 @@ onMounted(loadLookups)
           <div
             v-for="(item, idx) in items"
             :key="idx"
-            class="grid grid-cols-1 gap-3 rounded-xl border border-gray-100 p-3 md:grid-cols-12"
+            class="grid grid-cols-1 gap-3 rounded-xl border border-gray-100 dark:border-gray-800 p-3 md:grid-cols-12"
           >
             <AppSelect
               v-model="item.productId"
-              label="Mahsulot"
+              :label="t('common.product')"
               class="md:col-span-5"
               @update:model-value="onProductChange(item)"
             >
-              <option value="">Tanlang</option>
+              <option value="">{{ t('common.select') }}</option>
               <option v-for="p in products" :key="p.id" :value="String(p.id)">
                 {{ p.name }} ({{ money(p.price) }})
               </option>
             </AppSelect>
-            <AppInput v-model="item.quantity" label="Miqdor" type="number" class="md:col-span-2" />
-            <AppInput v-model="item.productCost" label="Narx" type="number" class="md:col-span-2" />
-            <label class="flex items-end gap-2 pb-2 text-theme-sm text-gray-700 md:col-span-2">
+            <AppInput v-model="item.quantity" :label="t('common.quantity')" type="number" class="md:col-span-2" />
+            <AppInput v-model="item.productCost" :label="t('common.price')" type="number" class="md:col-span-2" />
+            <label class="flex items-end gap-2 pb-2 text-theme-sm text-gray-700 dark:text-gray-300 md:col-span-2">
               <input v-model="item.isBonus" type="checkbox" class="size-4 rounded border-gray-300" />
-              Bonus
+              {{ t('common.bonus') }}
             </label>
             <div class="flex items-end md:col-span-1">
               <AppButton type="button" size="sm" variant="danger" @click="removeItem(idx)">
@@ -271,16 +274,16 @@ onMounted(loadLookups)
           </div>
         </div>
 
-        <p class="mt-4 text-theme-sm font-medium text-gray-800">
-          Taxminiy summa: {{ money(totalPreview) }}
+        <p class="mt-4 text-theme-sm font-medium text-gray-800 dark:text-white/90">
+          {{ t('orders.estimatedTotal', { amount: money(totalPreview) }) }}
         </p>
       </div>
 
       <div class="flex justify-end gap-2">
         <AppButton type="button" variant="secondary" @click="router.push('/admin/orders')">
-          Bekor
+          {{ t('common.cancel') }}
         </AppButton>
-        <AppButton type="submit" :loading="saving">Yaratish</AppButton>
+        <AppButton type="submit" :loading="saving">{{ t('common.create') }}</AppButton>
       </div>
     </form>
   </div>

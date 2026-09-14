@@ -86,6 +86,8 @@ export interface OrderStatResponse {
   cancelledOrdersCount?: number
   dailyDeliveredOrdersTotalSum?: number
   monthlyDeliveredOrdersTotalSum?: number
+  deliveredOrdersTotalSum?: number
+  cancelledOrdersTotalSum?: number
 }
 
 export interface DailyStatDTO {

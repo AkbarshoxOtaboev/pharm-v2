@@ -158,13 +158,20 @@ public class ProductServiceImplement implements ProductService {
 
     private ProductResponse mapToResponse(Store store) {
         Product p = store.getProduct();
-
-        return new ProductResponse(
+        ProductResponse response = new ProductResponse(
                 p.getId(),
                 p.getName(),
+                p.getPrice(),
                 p.getPriceCost(),
-                store.getQuantity(),
+                p.getCategory() != null ? mapToCategoryResponse(p.getCategory()) : null,
+                p.getSubCategory() != null ? p.getSubCategory().getId() : null,
+                p.getSortNumber(),
+                p.getStatus(),
+                p.getDescription(),
+                p.getPhoto(),
                 p.getUnitType()
         );
+        response.setStoreQuantity(store.getQuantity());
+        return response;
     }
 }

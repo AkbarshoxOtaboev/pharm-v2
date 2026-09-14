@@ -16,9 +16,9 @@ defineProps<{
     :class="[
       size === 'sm' ? 'px-3 py-2 text-theme-sm' : 'px-4 py-2.5 text-theme-sm',
       variant === 'secondary' &&
-        'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50',
+        'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10',
       variant === 'danger' && 'bg-error-500 text-white hover:bg-error-600',
-      variant === 'ghost' && 'bg-transparent text-gray-600 hover:bg-gray-100',
+      variant === 'ghost' && 'bg-transparent text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5',
       variant === 'success' && 'bg-success-500 text-white hover:bg-success-600',
       (!variant || variant === 'primary') &&
         'bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600',

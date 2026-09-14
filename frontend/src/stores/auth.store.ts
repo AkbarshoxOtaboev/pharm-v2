@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import * as authApi from '@/api/auth.api'
-import type { MeResponse, Role } from '@/types/api'
+import type { AuthResponse, MeResponse, Role } from '@/types/api'
+import { touchActivity } from '@/utils/sessionIdle'
 
 const ROLE_HOME: Record<Role, string> = {
   ADMIN: '/admin/dashboard',
@@ -39,6 +40,17 @@ export const useAuthStore = defineStore('auth', () => {
     else localStorage.removeItem('role')
   }
 
+  function applyAuthResponse(data: AuthResponse) {
+    accessToken.value = data.accessToken
+    refreshToken.value = data.refreshToken
+    userId.value = data.userId
+    username.value = data.username
+    fullName.value = data.fullName
+    avatar.value = data.avatar || 'default-1'
+    role.value = data.role
+    persist()
+  }
+
   function applyMe(me: MeResponse) {
     userId.value = me.id
     username.value = me.username
@@ -53,16 +65,10 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(user: string, password: string) {
     const res = await authApi.login(user, password)
     if (!res.success || !res.data) {
-      throw new Error(res.error?.message || 'Login xatosi')
+      throw new Error(res.error?.code || res.error?.message || 'errors.loginFailed')
     }
-    accessToken.value = res.data.accessToken
-    refreshToken.value = res.data.refreshToken
-    userId.value = res.data.userId
-    username.value = res.data.username
-    fullName.value = res.data.fullName
-    avatar.value = res.data.avatar || 'default-1'
-    role.value = res.data.role
-    persist()
+    applyAuthResponse(res.data)
+    touchActivity()
     try {
       const me = await authApi.fetchMe()
       if (me.success && me.data) applyMe(me.data)
@@ -86,7 +92,7 @@ export const useAuthStore = defineStore('auth', () => {
   }) {
     const res = await authApi.updateProfile(payload)
     if (!res.success || !res.data) {
-      throw new Error(res.error?.message || 'Profilni saqlab bo‘lmadi')
+      throw new Error(res.error?.code || res.error?.message || 'errors.saveProfile')
     }
     applyMe(res.data)
   }
@@ -94,16 +100,27 @@ export const useAuthStore = defineStore('auth', () => {
   async function changePassword(currentPassword: string, newPassword: string) {
     const res = await authApi.changePassword({ currentPassword, newPassword })
     if (!res.success) {
-      throw new Error(res.error?.message || 'Parolni o‘zgartirib bo‘lmadi')
+      throw new Error(res.error?.message || 'errors.changePassword')
     }
   }
 
-  async function logout() {
+  /** Refresh access (+ refresh) tokens. Returns false if refresh failed. */
+  async function refreshTokens(): Promise<boolean> {
+    const current = refreshToken.value || localStorage.getItem('refreshToken')
+    if (!current) return false
     try {
-      await authApi.logout()
+      const res = await authApi.refresh(current)
+      if (!res.success || !res.data?.accessToken) return false
+      applyAuthResponse(res.data)
+      touchActivity()
+      return true
     } catch {
-      /* ignore */
+      return false
     }
+  }
+
+  /** Clear local session without calling logout API (expired / idle). */
+  async function clearSession() {
     accessToken.value = null
     refreshToken.value = null
     userId.value = null
@@ -114,6 +131,15 @@ export const useAuthStore = defineStore('auth', () => {
     workPhone.value = ''
     role.value = null
     persist()
+  }
+
+  async function logout() {
+    try {
+      await authApi.logout()
+    } catch {
+      /* ignore */
+    }
+    await clearSession()
   }
 
   return {
@@ -130,6 +156,8 @@ export const useAuthStore = defineStore('auth', () => {
     homePath,
     login,
     logout,
+    clearSession,
+    refreshTokens,
     loadMe,
     updateProfile,
     changePassword,

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { enumLabel } from '@/i18n'
 import { fetchCategories, fetchSubcategories } from '@/api/categories.api'
 import {
   createProduct,
@@ -26,6 +28,7 @@ import { apiError, money, statusTone } from '@/utils/format'
 
 const UNIT_TYPES: UnitType[] = ['PCS', 'BOX', 'KG']
 
+const { t } = useI18n()
 const products = ref<ProductResponse[]>([])
 const categories = ref<CategoryResponse[]>([])
 const subcategories = ref<SubCategoryResponse[]>([])
@@ -72,7 +75,7 @@ async function load() {
       products.value = res.data || []
     }
   } catch (e) {
-    error.value = apiError(e, 'Mahsulotlarni yuklab bo‘lmadi')
+    error.value = apiError(e, 'errors.loadProducts')
   } finally {
     loading.value = false
   }
@@ -162,7 +165,7 @@ function buildFormData() {
 async function save() {
   formError.value = ''
   if (!form.name.trim() || !form.price || !form.priceCost || !form.categoryId) {
-    formError.value = 'Nom, narx, tannarx va kategoriya majburiy'
+    formError.value = t('errors.productRequiredFields')
     return
   }
   saving.value = true
@@ -176,19 +179,19 @@ async function save() {
     modalOpen.value = false
     await load()
   } catch (e) {
-    formError.value = apiError(e, 'Saqlab bo‘lmadi')
+    formError.value = apiError(e, 'errors.saveFailed')
   } finally {
     saving.value = false
   }
 }
 
 async function onDelete(p: ProductResponse) {
-  if (!confirm(`${p.name} o‘chirilsinmi?`)) return
+  if (!confirm(t('common.confirmDeleteNamed', { name: p.name }))) return
   try {
     await deleteProduct(p.id)
     await load()
   } catch (e) {
-    error.value = apiError(e, 'O‘chirib bo‘lmadi')
+    error.value = apiError(e, 'errors.deleteFailed')
   }
 }
 
@@ -196,7 +199,7 @@ onMounted(async () => {
   try {
     await loadCategories()
   } catch (e) {
-    error.value = apiError(e, 'Kategoriyalarni yuklab bo‘lmadi')
+    error.value = apiError(e, 'errors.loadCategories')
   }
   await load()
 })
@@ -204,21 +207,21 @@ onMounted(async () => {
 
 <template>
   <div>
-    <PageHeader title="Mahsulotlar" subtitle="Mahsulotlar katalogi">
+    <PageHeader :title="t('products.title')" :subtitle="t('products.subtitle')">
       <template #actions>
-        <AppButton @click="openCreate">Qo‘shish</AppButton>
+        <AppButton @click="openCreate">{{ t('common.add') }}</AppButton>
       </template>
     </PageHeader>
 
-    <div class="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-theme-xs">
+    <div class="mb-4 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4 shadow-theme-xs">
       <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
-        <AppInput v-model="q" label="Qidiruv" placeholder="Mahsulot nomi..." />
-        <AppSelect v-model="filterCategoryId" label="Kategoriya">
-          <option value="">Barchasi</option>
+        <AppInput v-model="q" :label="t('products.search')" :placeholder="t('products.searchPlaceholder')" />
+        <AppSelect v-model="filterCategoryId" :label="t('products.category')">
+          <option value="">{{ t('common.all') }}</option>
           <option v-for="c in categories" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
         </AppSelect>
         <div class="flex items-end gap-2 md:col-span-2">
-          <AppButton class="w-full" @click="load">Filtrlash</AppButton>
+          <AppButton class="w-full" @click="load">{{ t('common.filter') }}</AppButton>
           <AppButton
             variant="secondary"
             @click="
@@ -227,7 +230,7 @@ onMounted(async () => {
               load()
             "
           >
-            Tozalash
+            {{ t('common.clear') }}
           </AppButton>
         </div>
       </div>
@@ -235,39 +238,39 @@ onMounted(async () => {
 
     <div
       v-if="error"
-      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+      class="mb-4 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
     >
       {{ error }}
     </div>
 
     <DataTable
       :loading="loading"
-      :empty="!loading && !products.length ? 'Mahsulotlar topilmadi' : undefined"
+      :empty="!loading && !products.length ? t('products.notFound') : undefined"
     >
       <template #head>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Nom</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Narx</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Tannarx</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Kategoriya</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Birlik</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Status</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500">Amallar</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.name') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.price') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.cost') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('products.category') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.unit') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.status') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.actions') }}</th>
       </template>
       <tr v-for="p in products" :key="p.id">
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ p.name }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ money(p.price) }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ money(p.priceCost) }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
-          {{ p.categoryResponse?.name || '—' }}
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ p.name }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(p.price) }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(p.priceCost) }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
+          {{ p.categoryResponse?.name || t('common.empty') }}
         </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">{{ p.unitType || '—' }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
-          <AppBadge :tone="statusTone(p.status)">{{ p.status || '—' }}</AppBadge>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ enumLabel('unitType', p.unitType, t('common.empty')) }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
+          <AppBadge :tone="statusTone(p.status)">{{ enumLabel('status', p.status, t('common.empty')) }}</AppBadge>
         </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700">
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <div class="flex flex-wrap gap-2">
-            <AppButton size="sm" variant="secondary" @click="openEdit(p)">Tahrir</AppButton>
-            <AppButton size="sm" variant="danger" @click="onDelete(p)">O‘chirish</AppButton>
+            <AppButton size="sm" variant="secondary" @click="openEdit(p)">{{ t('common.edit') }}</AppButton>
+            <AppButton size="sm" variant="danger" @click="onDelete(p)">{{ t('common.delete') }}</AppButton>
           </div>
         </td>
       </tr>
@@ -275,24 +278,24 @@ onMounted(async () => {
 
     <AppModal
       :open="modalOpen"
-      :title="editingId ? 'Mahsulotni tahrirlash' : 'Yangi mahsulot'"
+      :title="editingId ? t('products.editTitle') : t('products.createTitle')"
       @close="modalOpen = false"
     >
       <div
         v-if="formError"
-        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
       >
         {{ formError }}
       </div>
       <form class="space-y-3" @submit.prevent="save">
-        <AppInput v-model="form.name" label="Nom" />
+        <AppInput v-model="form.name" :label="t('common.name')" />
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <AppInput v-model="form.price" label="Narx" type="number" />
-          <AppInput v-model="form.priceCost" label="Tannarx" type="number" />
+          <AppInput v-model="form.price" :label="t('common.price')" type="number" />
+          <AppInput v-model="form.priceCost" :label="t('common.cost')" type="number" />
         </div>
         <AppSelect
           v-model="form.categoryId"
-          label="Kategoriya"
+          :label="t('products.category')"
           @update:model-value="
             (v) => {
               form.subCategoryId = '';
@@ -300,32 +303,32 @@ onMounted(async () => {
             }
           "
         >
-          <option value="">Tanlang</option>
+          <option value="">{{ t('common.select') }}</option>
           <option v-for="c in categories" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
         </AppSelect>
-        <AppSelect v-model="form.subCategoryId" label="Subkategoriya">
-          <option value="">Tanlanmagan</option>
+        <AppSelect v-model="form.subCategoryId" :label="t('products.subcategory')">
+          <option value="">{{ t('common.notSelected') }}</option>
           <option v-for="s in formSubs" :key="s.id" :value="String(s.id)">{{ s.name }}</option>
         </AppSelect>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <AppInput v-model="form.sortNumber" label="Tartib raqami" type="number" />
-          <AppSelect v-model="form.unitType" label="Birlik">
-            <option v-for="u in UNIT_TYPES" :key="u" :value="u">{{ u }}</option>
+          <AppInput v-model="form.sortNumber" :label="t('products.sortNumber')" type="number" />
+          <AppSelect v-model="form.unitType" :label="t('common.unit')">
+            <option v-for="u in UNIT_TYPES" :key="u" :value="u">{{ enumLabel('unitType', u) }}</option>
           </AppSelect>
         </div>
-        <AppTextarea v-model="form.description" label="Tavsif" />
+        <AppTextarea v-model="form.description" :label="t('common.description')" />
         <label class="block space-y-1.5">
-          <span class="text-theme-sm font-medium text-gray-700">Rasm</span>
+          <span class="text-theme-sm font-medium text-gray-700 dark:text-gray-300">{{ t('common.photo') }}</span>
           <input
             type="file"
             accept="image/*"
-            class="block w-full text-theme-sm text-gray-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-theme-sm file:font-medium file:text-brand-600"
+            class="block w-full text-theme-sm text-gray-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-theme-sm file:font-medium file:text-brand-600 dark:text-gray-300 dark:file:bg-brand-500/15 dark:file:text-brand-400"
             @change="onPhotoChange"
           />
         </label>
         <div class="flex justify-end gap-2 pt-2">
-          <AppButton type="button" variant="secondary" @click="modalOpen = false">Bekor</AppButton>
-          <AppButton type="submit" :loading="saving">Saqlash</AppButton>
+          <AppButton type="button" variant="secondary" @click="modalOpen = false">{{ t('common.cancel') }}</AppButton>
+          <AppButton type="submit" :loading="saving">{{ t('common.save') }}</AppButton>
         </div>
       </form>
     </AppModal>

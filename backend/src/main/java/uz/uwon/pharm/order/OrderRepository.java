@@ -74,29 +74,55 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     );
 
     @Query(value = """
-            SELECT 
+            SELECT
                 (SELECT COUNT(*) FROM customers) as clientsCount,
-            
-                COUNT(*) as ordersCount,
-            
-                SUM(CASE WHEN order_status = 'DELIVERED'  THEN 1 ELSE 0 END) as deliveredOrdersCount,
-            
-                SUM(CASE WHEN order_status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelledOrdersCount,
-            
-                SUM(CASE WHEN order_status = 'SHIPPED' THEN 1 ELSE 0 END) as dailyDeliveredOrdersTotalSum,
-            
-                SUM(CASE WHEN order_status = 'DELIVERED' 
-                    AND created_at BETWEEN :startMonth AND :endMonth 
-                    THEN total_sum ELSE 0 END) as monthlyDeliveredOrdersTotalSum
-            
-            FROM orders
-            WHERE created_at BETWEEN :startMonth AND :endMonth
+
+                (SELECT COUNT(*) FROM orders
+                 WHERE CAST(created_at AS date)
+                       BETWEEN CAST(:startMonth AS date) AND CAST(:endMonth AS date)
+                ) as ordersCount,
+
+                (SELECT COUNT(*) FROM orders
+                 WHERE order_status = 'DELIVERED'
+                   AND CAST(updated_at AS date)
+                       BETWEEN CAST(:startMonth AS date) AND CAST(:endMonth AS date)
+                ) as deliveredOrdersCount,
+
+                (SELECT COUNT(*) FROM orders
+                 WHERE order_status = 'CANCELLED'
+                   AND CAST(updated_at AS date)
+                       BETWEEN CAST(:startMonth AS date) AND CAST(:endMonth AS date)
+                ) as cancelledOrdersCount,
+
+                (SELECT COALESCE(SUM(total_sum), 0) FROM orders
+                 WHERE order_status = 'DELIVERED'
+                   AND CAST(updated_at AS date)
+                       BETWEEN CAST(:startDay AS date) AND CAST(:endDay AS date)
+                ) as dailyDeliveredOrdersTotalSum,
+
+                (SELECT COALESCE(SUM(total_sum), 0) FROM orders
+                 WHERE order_status = 'DELIVERED'
+                   AND CAST(updated_at AS date)
+                       BETWEEN CAST(:startMonth AS date) AND CAST(:endMonth AS date)
+                ) as monthlyDeliveredOrdersTotalSum,
+
+                (SELECT COALESCE(SUM(total_sum), 0) FROM orders
+                 WHERE order_status = 'DELIVERED'
+                   AND CAST(updated_at AS date)
+                       BETWEEN CAST(:startMonth AS date) AND CAST(:endMonth AS date)
+                ) as deliveredOrdersTotalSum,
+
+                (SELECT COALESCE(SUM(total_sum), 0) FROM orders
+                 WHERE order_status = 'CANCELLED'
+                   AND CAST(updated_at AS date)
+                       BETWEEN CAST(:startMonth AS date) AND CAST(:endMonth AS date)
+                ) as cancelledOrdersTotalSum
             """, nativeQuery = true)
     OrderStatResponse getStatistics(
-            LocalDate startDay,
-            LocalDate endDay,
-            LocalDate startMonth,
-            LocalDate endMonth
+            @Param("startDay") LocalDate startDay,
+            @Param("endDay") LocalDate endDay,
+            @Param("startMonth") LocalDate startMonth,
+            @Param("endMonth") LocalDate endMonth
     );
 
 

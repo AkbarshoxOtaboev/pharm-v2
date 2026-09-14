@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { enumLabel } from '@/i18n'
 import { uploadAvatar } from '@/api/auth.api'
 import { useAuthStore } from '@/stores/auth.store'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -9,6 +11,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import { apiError } from '@/utils/format'
 
+const { t } = useI18n()
 const auth = useAuthStore()
 
 const profile = reactive({
@@ -50,7 +53,7 @@ async function onUpload(file: File) {
       profile.avatar = res.data.filename
     }
   } catch (e) {
-    profileError.value = apiError(e, 'Rasm yuklanmadi')
+    profileError.value = apiError(e, 'errors.uploadImage')
   }
 }
 
@@ -58,7 +61,7 @@ async function saveProfile() {
   profileMsg.value = ''
   profileError.value = ''
   if (!profile.fullName.trim()) {
-    profileError.value = 'Ism majburiy'
+    profileError.value = t('errors.nameRequired')
     return
   }
   savingProfile.value = true
@@ -69,9 +72,9 @@ async function saveProfile() {
       workPhone: profile.workPhone.trim(),
       avatar: profile.avatar || 'default-1',
     })
-    profileMsg.value = 'Profil saqlandi'
+    profileMsg.value = t('profile.saved')
   } catch (e) {
-    profileError.value = apiError(e)
+    profileError.value = apiError(e, 'errors.saveProfile')
   } finally {
     savingProfile.value = false
   }
@@ -81,15 +84,15 @@ async function savePassword() {
   passwordMsg.value = ''
   passwordError.value = ''
   if (!passwords.currentPassword || !passwords.newPassword) {
-    passwordError.value = 'Joriy va yangi parolni kiriting'
+    passwordError.value = t('errors.enterPasswords')
     return
   }
   if (passwords.newPassword !== passwords.confirmPassword) {
-    passwordError.value = 'Yangi parollar mos kelmadi'
+    passwordError.value = t('errors.passwordMismatch')
     return
   }
   if (passwords.newPassword.length < 4) {
-    passwordError.value = 'Yangi parol kamida 4 belgi'
+    passwordError.value = t('errors.passwordMinLength')
     return
   }
   savingPassword.value = true
@@ -98,9 +101,9 @@ async function savePassword() {
     passwords.currentPassword = ''
     passwords.newPassword = ''
     passwords.confirmPassword = ''
-    passwordMsg.value = 'Parol o‘zgartirildi'
+    passwordMsg.value = t('profile.passwordChanged')
   } catch (e) {
-    passwordError.value = apiError(e)
+    passwordError.value = apiError(e, 'errors.changePassword')
   } finally {
     savingPassword.value = false
   }
@@ -109,68 +112,68 @@ async function savePassword() {
 
 <template>
   <div>
-    <PageHeader title="Mening profilim" subtitle="Shaxsiy maʼlumotlar va parol" />
+    <PageHeader :title="t('profile.title')" :subtitle="t('profile.subtitle')" />
 
     <div class="grid gap-6 xl:grid-cols-2">
-      <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-xs">
+      <section class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-6 shadow-theme-xs">
         <div class="mb-5 flex items-center gap-4">
           <UserAvatar :avatar="profile.avatar" :name="profile.fullName" size="lg" />
           <div>
-            <h2 class="text-lg font-semibold text-gray-800">{{ auth.fullName }}</h2>
-            <p class="text-theme-sm text-gray-500">{{ auth.username }} · {{ auth.role }}</p>
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ auth.fullName }}</h2>
+            <p class="text-theme-sm text-gray-500 dark:text-gray-400">{{ auth.username }} · {{ enumLabel('role', auth.role) }}</p>
           </div>
         </div>
 
         <div
           v-if="profileError"
-          class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+          class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
         >
           {{ profileError }}
         </div>
         <div
           v-if="profileMsg"
-          class="mb-3 rounded-xl border border-success-100 bg-success-50 px-4 py-3 text-theme-sm text-success-700"
+          class="mb-3 rounded-xl border border-success-100 bg-success-50 px-4 py-3 text-theme-sm text-success-700 dark:border-success-500/20 dark:bg-success-500/10"
         >
           {{ profileMsg }}
         </div>
 
         <form class="space-y-4" @submit.prevent="saveProfile">
           <AvatarPicker v-model="profile.avatar" allow-upload @upload="onUpload" />
-          <AppInput v-model="profile.fullName" label="To‘liq ism" />
-          <AppInput :model-value="auth.username" label="Login" disabled />
-          <AppInput v-model="profile.personalPhone" label="Shaxsiy telefon" />
-          <AppInput v-model="profile.workPhone" label="Ish telefoni" />
-          <AppButton type="submit" :loading="savingProfile">Saqlash</AppButton>
+          <AppInput v-model="profile.fullName" :label="t('profile.fullName')" />
+          <AppInput :model-value="auth.username" :label="t('common.login')" disabled />
+          <AppInput v-model="profile.personalPhone" :label="t('profile.personalPhone')" />
+          <AppInput v-model="profile.workPhone" :label="t('profile.workPhone')" />
+          <AppButton type="submit" :loading="savingProfile">{{ t('common.save') }}</AppButton>
         </form>
       </section>
 
-      <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-xs">
-        <h2 class="mb-4 text-lg font-semibold text-gray-800">Parolni o‘zgartirish</h2>
+      <section class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-6 shadow-theme-xs">
+        <h2 class="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">{{ t('profile.changePassword') }}</h2>
         <div
           v-if="passwordError"
-          class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600"
+          class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
         >
           {{ passwordError }}
         </div>
         <div
           v-if="passwordMsg"
-          class="mb-3 rounded-xl border border-success-100 bg-success-50 px-4 py-3 text-theme-sm text-success-700"
+          class="mb-3 rounded-xl border border-success-100 bg-success-50 px-4 py-3 text-theme-sm text-success-700 dark:border-success-500/20 dark:bg-success-500/10"
         >
           {{ passwordMsg }}
         </div>
         <form class="space-y-4" @submit.prevent="savePassword">
           <AppInput
             v-model="passwords.currentPassword"
-            label="Joriy parol"
+            :label="t('profile.currentPassword')"
             type="password"
           />
-          <AppInput v-model="passwords.newPassword" label="Yangi parol" type="password" />
+          <AppInput v-model="passwords.newPassword" :label="t('profile.newPassword')" type="password" />
           <AppInput
             v-model="passwords.confirmPassword"
-            label="Yangi parolni tasdiqlash"
+            :label="t('profile.confirmPassword')"
             type="password"
           />
-          <AppButton type="submit" :loading="savingPassword">Parolni yangilash</AppButton>
+          <AppButton type="submit" :loading="savingPassword">{{ t('profile.updatePassword') }}</AppButton>
         </form>
       </section>
     </div>

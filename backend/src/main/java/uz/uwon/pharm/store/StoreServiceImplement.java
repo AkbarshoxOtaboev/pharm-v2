@@ -33,6 +33,7 @@ public class StoreServiceImplement implements StoreService {
         store.setQuantity(quantity);
         store.setTotalAmount(totalAmount);
         store.setDateOfArrival(dto.getDateOfArrival());
+        repository.save(store);
 
         StoreHistory history = StoreHistory.builder()
                 .productName(store.getProduct().getName())

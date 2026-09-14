@@ -36,11 +36,13 @@ public class CourierStockServiceImplement implements CourierStockService{
         log.info("Transfer product from stock to courier stock courier id {}", dto.getCourierId());
 
         for (CourierStockItem item : dto.getItems()) {
+            if (item.getQuantity() == null || item.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Quantity must be greater than 0");
+            }
 
-            Store store = storeRepository.findById(item.getProductId())
+            Store store = storeRepository.findByProduct_IdAndStatus(item.getProductId(), Status.ACTIVE)
                     .orElseThrow(() -> new NotFoundException("Product not found"));
 
-            // ❗️ SECURITY CHECK (остаток на складе)
             if (store.getQuantity().compareTo(item.getQuantity()) < 0) {
                 throw new IllegalArgumentException(
                         "Not enough product in stock. Available: "
@@ -99,32 +101,30 @@ public class CourierStockServiceImplement implements CourierStockService{
 
     @Override
     public void returnToStore(ReturnDTO dto) {
+        if (dto.getQuantity() == null || dto.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
         CourierStock stock = repository
                 .findByCourierIdAndProductId(dto.getCourierId(), dto.getProductId())
-                .orElseThrow(() -> new RuntimeException("Товар не найден у курьера"));
+                .orElseThrow(() -> new NotFoundException("Product not found on courier"));
 
-        // ❗ проверка
         if (stock.getQuantity().compareTo(dto.getQuantity()) < 0) {
-            throw new RuntimeException("Недостаточно товара у курьера");
+            throw new IllegalArgumentException("Not enough product on courier");
         }
         BigDecimal before = stock.getQuantity();
-        // 🔻 уменьшаем у курьера
         stock.setQuantity(stock.getQuantity().subtract(dto.getQuantity()));
         stock.setTotalAmount(
                 stock.getQuantity().multiply(stock.getProductPrice())
         );
         repository.save(stock);
-        // ✅ HISTORY
         saveHistory(stock, before, dto.getQuantity().negate(), StockActionType.RETURN, "Возврать к складу");
-        // 🔼 увеличиваем склад
-        Store store = storeRepository.findById(dto.getProductId())
-                .orElseThrow(() -> new RuntimeException("Товар не найден на складе"));
+        Store store = storeRepository.findByProduct_IdAndStatus(dto.getProductId(), Status.ACTIVE)
+                .orElseThrow(() -> new NotFoundException("Product not found in store"));
 
         store.setQuantity(store.getQuantity().add(dto.getQuantity()));
         store.setTotalAmount(
                 store.getQuantity().multiply(store.getProduct().getPrice())
         );
-
     }
 
     @Override
