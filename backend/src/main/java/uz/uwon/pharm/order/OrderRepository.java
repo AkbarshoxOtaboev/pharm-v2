@@ -40,8 +40,14 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
                     SUM(CASE WHEN o.orderStatus = uz.uwon.pharm.order.OrderStatus.PENDING THEN 1 ELSE 0 END) as pendingCount,
             
                     SUM(CASE 
-                        WHEN o.orderStatus = uz.uwon.pharm.order.OrderStatus.DELIVERED AND o.paymentType = 0 
+                        WHEN o.orderStatus = uz.uwon.pharm.order.OrderStatus.DELIVERED 
+                             AND o.paymentType = uz.uwon.pharm.order.PaymentType.CASH 
                         THEN o.totalSum ELSE 0 END) as cashTotal,
+            
+                    SUM(CASE 
+                        WHEN o.orderStatus = uz.uwon.pharm.order.OrderStatus.DELIVERED 
+                             AND o.paymentType = uz.uwon.pharm.order.PaymentType.CARD 
+                        THEN o.totalSum ELSE 0 END) as cardTotal,
             
                     SUM(CASE 
                         WHEN o.orderStatus = uz.uwon.pharm.order.OrderStatus.DELIVERED 

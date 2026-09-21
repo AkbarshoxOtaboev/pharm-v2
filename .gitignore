@@ -4,6 +4,7 @@ backend/.idea/
 backend/*.iml
 backend/uploads/
 backend/temp/
+backend/*.log
 
 # Frontend
 frontend/node_modules/

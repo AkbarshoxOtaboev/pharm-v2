@@ -6,15 +6,21 @@
     "menu": "Меню"
   },
   "nav": {
-    "dashboard": "Бошқарув",
+    "groupMain": "Асосий",
+    "groupSales": "Сотув",
+    "groupFinance": "Молия",
+    "groupStore": "Омбор",
+    "groupSettings": "Созламалар",
+    "dashboard": "Бошқарув панели",
     "orders": "Буюртмалар",
     "customers": "Мижозлар",
     "users": "Фойдаланувчилар",
     "categories": "Категориялар",
     "products": "Маҳсулотлар",
     "store": "Омбор",
-    "courierStock": "Курьер захира",
-    "cash": "Нақд пул",
+    "courierStock": "Курьер захираси",
+    "cash": "Кунлик ҳисоботлар",
+    "courierReports": "Курьер ҳисоботлари",
     "saleLogs": "Сотув логлари",
     "profile": "Профил"
   },
@@ -305,7 +311,7 @@
     "returnOk": "Қайтариш муваффақиятли"
   },
   "cash": {
-    "title": "Нақд пул",
+    "title": "Кунлик ҳисоботлар",
     "subtitle": "Курьер кассаси ва кунлик ҳисобот",
     "totalOnCourier": "Курьердаги жами",
     "entriesCount": "Ёзувлар сони",
@@ -314,6 +320,22 @@
     "dailyReport": "Кунлик ҳисобот",
     "reportEmpty": "Ҳисобот бўш",
     "return": "Қайтариш"
+  },
+  "courierReports": {
+    "title": "Курьер ҳисоботлари",
+    "subtitle": "Курьер бўйича сотув суммалари ва тўлов турлари",
+    "totalSum": "Жами сотув",
+    "cashTotal": "Нақд тўлов",
+    "cardTotal": "Карта тўлови",
+    "totalOrders": "Жами буюртмалар",
+    "deliveredCount": "Етказилган",
+    "cancelledCount": "Бекор қилинган",
+    "pendingCount": "Кутилмоқда",
+    "byPaymentType": "Тўлов турлари бўйича",
+    "orders": "Курьер буюртмалари",
+    "empty": "Буюртмалар топилмади",
+    "selectCourier": "Ҳисоботни кўриш учун курьерни танланг",
+    "deliveredOnly": "Суммалар фақат етказилган буюртмалар бўйича"
   },
   "saleLogs": {
     "title": "Сотув логлари",
@@ -380,6 +402,7 @@
     "returnFailed": "Қайтариш амалга ошмади",
     "loadCash": "Нақд пул маълумотларини юклаб бўлмади",
     "loadDailyReport": "Кунлик ҳисоботни юклаб бўлмади",
+    "loadCourierReport": "Курьер ҳисоботини юклаб бўлмади",
     "returnCashFailed": "Қайтариб бўлмади",
     "loadSaleLogs": "Сотув логларини юклаб бўлмади",
     "enterPasswords": "Жорий ва янги паролни киритинг",
@@ -399,6 +422,12 @@
       "UNAUTHORIZED": "Авторизация талаб қилинади",
       "ACCESS_DENIED": "Рухсат йўқ",
       "VALIDATION_ERROR": "Маълумотлар нотўғри",
+      "METHOD_NOT_ALLOWED": "Бу амал қўлланмайди",
+      "MALFORMED_REQUEST": "Сўров маълумотлари бузилган",
+      "MISSING_PARAMETER": "Мажбурий параметр кўрсатилмаган",
+      "TYPE_MISMATCH": "Параметр қиймати нотўғри",
+      "UNSUPPORTED_MEDIA_TYPE": "Маълумот тури қўлланмайди",
+      "FILE_TOO_LARGE": "Файл ҳажми жуда катта",
       "INTERNAL_ERROR": "Сервер хатоси"
     }
   }

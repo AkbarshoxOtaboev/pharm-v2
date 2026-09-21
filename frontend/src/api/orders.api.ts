@@ -1,6 +1,7 @@
 import api from './axios'
 import type {
   ApiResponse,
+  CourierStatsResponse,
   DailyStatDTO,
   OrderDTO,
   OrderDetailResponse,
@@ -23,6 +24,17 @@ export async function fetchMonthlySales(year?: number) {
   const { data } = await api.get<ApiResponse<number[]>>('/statistics/monthly-sales', {
     params: year ? { year } : undefined,
   })
+  return data
+}
+
+export async function fetchCourierStats(
+  courierId: number,
+  params: { from?: string; to?: string } = {},
+) {
+  const { data } = await api.get<ApiResponse<CourierStatsResponse>>(
+    `/statistics/courier/${courierId}`,
+    { params },
+  )
   return data
 }
 

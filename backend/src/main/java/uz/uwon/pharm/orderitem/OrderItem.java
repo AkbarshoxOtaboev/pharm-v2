@@ -33,6 +33,7 @@ public class OrderItem {
     private BigDecimal quantity;
     private BigDecimal price;
     private BigDecimal totalSum;
+    @Builder.Default
     private Boolean isBonus = false;
     @CreationTimestamp(source = SourceType.DB)
     private LocalDate createdAt;

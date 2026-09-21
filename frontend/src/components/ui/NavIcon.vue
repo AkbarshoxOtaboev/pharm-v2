@@ -73,6 +73,14 @@ defineProps<{ name: string; active?: boolean }>()
       <path d="M12 15V8" />
       <path d="M16 15V12" />
     </g>
+    <!-- courier report / document with chart -->
+    <g v-else-if="name === 'report'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 3H7C5.9 3 5 3.9 5 5V19C5 20.1 5.9 21 7 21H17C18.1 21 19 20.1 19 19V8L14 3Z" />
+      <path d="M14 3V8H19" />
+      <path d="M9 17V13" />
+      <path d="M12 17V11" />
+      <path d="M15 17V15" />
+    </g>
     <!-- fallback -->
     <circle v-else cx="12" cy="12" r="4" fill="currentColor" />
   </svg>

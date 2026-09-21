@@ -6,15 +6,21 @@
     "menu": "Menyu"
   },
   "nav": {
-    "dashboard": "Boshqaruv",
+    "groupMain": "Asosiy",
+    "groupSales": "Sotuv",
+    "groupFinance": "Moliya",
+    "groupStore": "Ombor",
+    "groupSettings": "Sozlamalar",
+    "dashboard": "Boshqaruv paneli",
     "orders": "Buyurtmalar",
     "customers": "Mijozlar",
     "users": "Foydalanuvchilar",
     "categories": "Kategoriyalar",
     "products": "Mahsulotlar",
     "store": "Ombor",
-    "courierStock": "Kuryer zaxira",
-    "cash": "Naqd pul",
+    "courierStock": "Kuryer zaxirasi",
+    "cash": "Kunlik hisobotlar",
+    "courierReports": "Kuryer hisobotlari",
     "saleLogs": "Sotuv loglari",
     "profile": "Profil"
   },
@@ -305,7 +311,7 @@
     "returnOk": "Qaytarish muvaffaqiyatli"
   },
   "cash": {
-    "title": "Naqd pul",
+    "title": "Kunlik hisobotlar",
     "subtitle": "Kuryer kassasi va kunlik hisobot",
     "totalOnCourier": "Kuryerdagi jami",
     "entriesCount": "Yozuvlar soni",
@@ -314,6 +320,22 @@
     "dailyReport": "Kunlik hisobot",
     "reportEmpty": "Hisobot bo‘sh",
     "return": "Qaytarish"
+  },
+  "courierReports": {
+    "title": "Kuryer hisobotlari",
+    "subtitle": "Kuryer bo‘yicha sotuv summalari va to‘lov turlari",
+    "totalSum": "Jami sotuv",
+    "cashTotal": "Naqd to‘lov",
+    "cardTotal": "Karta to‘lovi",
+    "totalOrders": "Jami buyurtmalar",
+    "deliveredCount": "Yetkazilgan",
+    "cancelledCount": "Bekor qilingan",
+    "pendingCount": "Kutilmoqda",
+    "byPaymentType": "To‘lov turlari bo‘yicha",
+    "orders": "Kuryer buyurtmalari",
+    "empty": "Buyurtmalar topilmadi",
+    "selectCourier": "Hisobotni ko‘rish uchun kuryerni tanlang",
+    "deliveredOnly": "Summalar faqat yetkazilgan buyurtmalar bo‘yicha"
   },
   "saleLogs": {
     "title": "Sotuv loglari",
@@ -380,6 +402,7 @@
     "returnFailed": "Qaytarish amalga oshmadi",
     "loadCash": "Naqd pul maʼlumotlarini yuklab bo‘lmadi",
     "loadDailyReport": "Kunlik hisobotni yuklab bo‘lmadi",
+    "loadCourierReport": "Kuryer hisobotini yuklab bo‘lmadi",
     "returnCashFailed": "Qaytarib bo‘lmadi",
     "loadSaleLogs": "Sotuv loglarini yuklab bo‘lmadi",
     "enterPasswords": "Joriy va yangi parolni kiriting",
@@ -399,6 +422,12 @@
       "UNAUTHORIZED": "Avtorizatsiya talab qilinadi",
       "ACCESS_DENIED": "Ruxsat yo‘q",
       "VALIDATION_ERROR": "Maʼlumotlar noto‘g‘ri",
+      "METHOD_NOT_ALLOWED": "Bu amal qo‘llanmaydi",
+      "MALFORMED_REQUEST": "So‘rov maʼlumotlari buzilgan",
+      "MISSING_PARAMETER": "Majburiy parametr ko‘rsatilmagan",
+      "TYPE_MISMATCH": "Parametr qiymati noto‘g‘ri",
+      "UNSUPPORTED_MEDIA_TYPE": "Maʼlumot turi qo‘llanmaydi",
+      "FILE_TOO_LARGE": "Fayl hajmi juda katta",
       "INTERNAL_ERROR": "Server xatosi"
     }
   }

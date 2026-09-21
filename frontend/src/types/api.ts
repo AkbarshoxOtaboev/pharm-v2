@@ -112,6 +112,17 @@ export interface OrderResponse {
   createdAt?: string
   updatedAt?: string
   courierName?: string
+  paymentType?: PaymentType
+}
+
+export interface CourierStatsResponse {
+  totalOrders?: number
+  deliveredCount?: number
+  canceledCount?: number
+  pendingCount?: number
+  cashTotal?: number
+  cardTotal?: number
+  totalSum?: number
 }
 
 export interface OrderItemResponse {

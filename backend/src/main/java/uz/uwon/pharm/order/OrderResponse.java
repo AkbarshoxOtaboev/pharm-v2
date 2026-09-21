@@ -22,4 +22,5 @@ public class OrderResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String courierName;
+    private PaymentType paymentType;
 }

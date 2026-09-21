@@ -697,7 +697,8 @@ public class OrderServiceImplement implements OrderService {
                 order.getOrderStatus(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
-                order.getUser().getFullName()
+                order.getUser().getFullName(),
+                order.getPaymentType()
         );
     }
 

@@ -9,5 +9,6 @@ public interface CourierStatsDto {
     Long getCanceledCount();
     Long getPendingCount();
     BigDecimal getCashTotal();   // 🔥 sum
+    BigDecimal getCardTotal();
     BigDecimal getTotalSum();
 }

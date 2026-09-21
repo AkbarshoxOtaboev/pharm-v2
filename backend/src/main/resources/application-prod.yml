@@ -14,7 +14,6 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
-    database: PostgreSql
     open-in-view: false
   data:
     redis:

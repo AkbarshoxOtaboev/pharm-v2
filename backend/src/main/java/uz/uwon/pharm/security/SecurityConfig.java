@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/store/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/statistics/courier/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/courier-stock/transfer", "/api/v1/courier-stock/return")
                             .hasRole("ADMIN")
                         .requestMatchers("/api/v1/courier/**").hasRole("COURIER")

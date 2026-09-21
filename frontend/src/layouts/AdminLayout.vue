@@ -14,22 +14,47 @@ const { t } = useI18n()
 const mobileOpen = ref(false)
 const collapsed = ref(false)
 
-const nav = computed(() => [
-  { to: '/admin/dashboard', label: t('nav.dashboard'), icon: 'dashboard' },
-  { to: '/admin/orders', label: t('nav.orders'), icon: 'orders' },
-  { to: '/admin/customers', label: t('nav.customers'), icon: 'customers' },
-  { to: '/admin/users', label: t('nav.users'), icon: 'users' },
-  { to: '/admin/categories', label: t('nav.categories'), icon: 'categories' },
-  { to: '/admin/products', label: t('nav.products'), icon: 'products' },
-  { to: '/admin/store', label: t('nav.store'), icon: 'store' },
-  { to: '/admin/courier-stock', label: t('nav.courierStock'), icon: 'courier' },
-  { to: '/admin/cash-register', label: t('nav.cash'), icon: 'cash' },
-  { to: '/admin/sale-logs', label: t('nav.saleLogs'), icon: 'sales' },
+const navGroups = computed(() => [
+  {
+    label: t('nav.groupMain'),
+    items: [{ to: '/admin/dashboard', label: t('nav.dashboard'), icon: 'dashboard' }],
+  },
+  {
+    label: t('nav.groupSales'),
+    items: [
+      { to: '/admin/orders', label: t('nav.orders'), icon: 'orders' },
+      { to: '/admin/customers', label: t('nav.customers'), icon: 'customers' },
+      { to: '/admin/sale-logs', label: t('nav.saleLogs'), icon: 'sales' },
+    ],
+  },
+  {
+    label: t('nav.groupFinance'),
+    items: [
+      { to: '/admin/cash-register', label: t('nav.cash'), icon: 'cash' },
+      { to: '/admin/courier-reports', label: t('nav.courierReports'), icon: 'report' },
+    ],
+  },
+  {
+    label: t('nav.groupStore'),
+    items: [
+      { to: '/admin/products', label: t('nav.products'), icon: 'products' },
+      { to: '/admin/store', label: t('nav.store'), icon: 'store' },
+      { to: '/admin/courier-stock', label: t('nav.courierStock'), icon: 'courier' },
+    ],
+  },
+  {
+    label: t('nav.groupSettings'),
+    items: [
+      { to: '/admin/users', label: t('nav.users'), icon: 'users' },
+      { to: '/admin/categories', label: t('nav.categories'), icon: 'categories' },
+    ],
+  },
 ])
 
 const pageTitle = computed(() => {
   if (route.path.startsWith('/admin/profile')) return t('nav.profile')
-  return nav.value.find((n) => route.path.startsWith(n.to))?.label || t('app.adminPanel')
+  const items = navGroups.value.flatMap((group) => group.items)
+  return items.find((n) => route.path.startsWith(n.to))?.label || t('app.adminPanel')
 })
 
 onMounted(() => {
@@ -72,30 +97,32 @@ onMounted(() => {
         </button>
       </div>
 
-      <nav class="mb-6">
-        <h3
-          class="mb-4 text-xs uppercase leading-5 text-gray-400"
-          :class="collapsed ? 'text-center' : ''"
-        >
-          {{ collapsed ? '•' : t('app.menu') }}
-        </h3>
-        <ul class="flex flex-col gap-1">
-          <li v-for="item in nav" :key="item.to">
-            <RouterLink
-              :to="item.to"
-              class="menu-item group"
-              :class="[
-                collapsed ? 'justify-center px-2' : '',
-                route.path.startsWith(item.to) ? 'menu-item-active' : 'menu-item-inactive',
-              ]"
-              :title="item.label"
-              @click="mobileOpen = false"
-            >
-              <NavIcon :name="item.icon" :active="route.path.startsWith(item.to)" />
-              <span v-if="!collapsed">{{ item.label }}</span>
-            </RouterLink>
-          </li>
-        </ul>
+      <nav class="mb-6 flex flex-col gap-6">
+        <div v-for="group in navGroups" :key="group.label">
+          <h3
+            class="mb-4 text-xs uppercase leading-5 text-gray-400"
+            :class="collapsed ? 'text-center' : ''"
+          >
+            {{ collapsed ? '•' : group.label }}
+          </h3>
+          <ul class="flex flex-col gap-1">
+            <li v-for="item in group.items" :key="item.to">
+              <RouterLink
+                :to="item.to"
+                class="menu-item group"
+                :class="[
+                  collapsed ? 'justify-center px-2' : '',
+                  route.path.startsWith(item.to) ? 'menu-item-active' : 'menu-item-inactive',
+                ]"
+                :title="item.label"
+                @click="mobileOpen = false"
+              >
+                <NavIcon :name="item.icon" :active="route.path.startsWith(item.to)" />
+                <span v-if="!collapsed">{{ item.label }}</span>
+              </RouterLink>
+            </li>
+          </ul>
+        </div>
       </nav>
     </aside>
 

@@ -86,6 +86,11 @@ const router = createRouter({
           component: () => import('@/pages/admin/CashRegisterPage.vue'),
         },
         {
+          path: 'courier-reports',
+          name: 'admin-courier-reports',
+          component: () => import('@/pages/admin/CourierReportsPage.vue'),
+        },
+        {
           path: 'sale-logs',
           name: 'admin-sale-logs',
           component: () => import('@/pages/admin/SaleLogsPage.vue'),

@@ -6,7 +6,12 @@
     "menu": "Меню"
   },
   "nav": {
-    "dashboard": "Панель",
+    "groupMain": "Основное",
+    "groupSales": "Продажи",
+    "groupFinance": "Финансы",
+    "groupStore": "Склад",
+    "groupSettings": "Настройки",
+    "dashboard": "Панель управления",
     "orders": "Заказы",
     "customers": "Клиенты",
     "users": "Пользователи",
@@ -14,7 +19,8 @@
     "products": "Товары",
     "store": "Склад",
     "courierStock": "Запас курьера",
-    "cash": "Наличные",
+    "cash": "Ежедневные отчёты",
+    "courierReports": "Отчёты по курьерам",
     "saleLogs": "Журнал продаж",
     "profile": "Профиль"
   },
@@ -305,7 +311,7 @@
     "returnOk": "Возврат выполнен"
   },
   "cash": {
-    "title": "Наличные",
+    "title": "Ежедневные отчёты",
     "subtitle": "Касса курьера и ежедневный отчёт",
     "totalOnCourier": "Всего у курьера",
     "entriesCount": "Количество записей",
@@ -314,6 +320,22 @@
     "dailyReport": "Ежедневный отчёт",
     "reportEmpty": "Отчёт пуст",
     "return": "Вернуть"
+  },
+  "courierReports": {
+    "title": "Отчёты по курьерам",
+    "subtitle": "Суммы продаж курьера по типам оплаты",
+    "totalSum": "Всего продаж",
+    "cashTotal": "Наличными",
+    "cardTotal": "Картой",
+    "totalOrders": "Всего заказов",
+    "deliveredCount": "Доставлено",
+    "cancelledCount": "Отменено",
+    "pendingCount": "В ожидании",
+    "byPaymentType": "По типам оплаты",
+    "orders": "Заказы курьера",
+    "empty": "Заказы не найдены",
+    "selectCourier": "Выберите курьера для просмотра отчёта",
+    "deliveredOnly": "Суммы считаются только по доставленным заказам"
   },
   "saleLogs": {
     "title": "Журнал продаж",
@@ -380,6 +402,7 @@
     "returnFailed": "Возврат не выполнен",
     "loadCash": "Не удалось загрузить данные по наличным",
     "loadDailyReport": "Не удалось загрузить ежедневный отчёт",
+    "loadCourierReport": "Не удалось загрузить отчёт по курьеру",
     "returnCashFailed": "Не удалось вернуть",
     "loadSaleLogs": "Не удалось загрузить журнал продаж",
     "enterPasswords": "Введите текущий и новый пароль",
@@ -399,6 +422,12 @@
       "UNAUTHORIZED": "Требуется авторизация",
       "ACCESS_DENIED": "Нет доступа",
       "VALIDATION_ERROR": "Некорректные данные",
+      "METHOD_NOT_ALLOWED": "Действие не поддерживается",
+      "MALFORMED_REQUEST": "Данные запроса повреждены",
+      "MISSING_PARAMETER": "Не указан обязательный параметр",
+      "TYPE_MISMATCH": "Некорректное значение параметра",
+      "UNSUPPORTED_MEDIA_TYPE": "Тип данных не поддерживается",
+      "FILE_TOO_LARGE": "Файл слишком большой",
       "INTERNAL_ERROR": "Ошибка сервера"
     }
   }
