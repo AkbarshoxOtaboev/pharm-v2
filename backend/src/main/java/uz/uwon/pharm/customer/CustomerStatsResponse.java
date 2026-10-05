@@ -2,16 +2,14 @@ package uz.uwon.pharm.customer;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 import uz.uwon.pharm.utils.Status;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Date;
 
 @Getter
-@Setter
 @AllArgsConstructor
-public class CustomerResponse {
+public class CustomerStatsResponse {
     private Long id;
     private String fullName;
     private String phone;
@@ -21,5 +19,7 @@ public class CustomerResponse {
     private CustomerType type;
     private Status status;
     private LocalDate createdAt;
-    private String lastAddress;
+    private long orderCount;
+    private BigDecimal orderSum;
+    private BigDecimal avgCheck;
 }

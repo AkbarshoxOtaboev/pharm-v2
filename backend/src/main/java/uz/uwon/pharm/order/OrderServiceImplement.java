@@ -28,6 +28,7 @@ import uz.uwon.pharm.productSaleLog.SaleLogDTO;
 import uz.uwon.pharm.productSaleLog.SaleLogService;
 import uz.uwon.pharm.storage.StorageService;
 import uz.uwon.pharm.users.*;
+import uz.uwon.pharm.utils.PhoneFormatter;
 import uz.uwon.pharm.utils.Status;
 
 import java.math.BigDecimal;
@@ -63,10 +64,16 @@ public class OrderServiceImplement implements OrderService {
         Customer customer;
 
         if (dto.getCustomerId() == null) {
-            customer = new Customer();
-            customer.setFullName(dto.getFullName());
-            customer.setPhone(dto.getPhone());
-            customerRepository.save(customer);
+            String phone = PhoneFormatter.normalize(dto.getPhone());
+            customer = customerRepository.findByPhone(phone).orElseGet(() -> {
+                Customer created = new Customer();
+                created.setFullName(dto.getFullName());
+                created.setPhone(phone);
+                return customerRepository.save(created);
+            });
+            if (customer.getStatus() != Status.ACTIVE) {
+                customer.setStatus(Status.ACTIVE);
+            }
         } else {
             customer = customerRepository.findByIdAndStatus(dto.getCustomerId(), Status.ACTIVE)
                     .orElseThrow(() -> new NotFoundException("Customer not found"));
@@ -304,7 +311,7 @@ public class OrderServiceImplement implements OrderService {
                         .productName(item.getProduct().getName())
                         .productPriceCost(item.getPrice())
                         .quantity(item.getQuantity())
-                        .totalSum(item.getQuantity().multiply(item.getProduct().getPriceCost()))
+                        .totalSum(item.getTotalSum())
                         .isBonus(item.getIsBonus())
                         .build();
 
@@ -703,7 +710,7 @@ public class OrderServiceImplement implements OrderService {
     }
 
     private OrderDetailResponse mapToDetailResponse(Order order) {
-        UserResponse courier = new UserResponse(order.getUser().getId(), order.getUser().getFullName(), order.getUser().getWorkPhone());
+        UserResponse courier = new UserResponse(order.getUser().getId(), order.getUser().getWorkPhone(), order.getUser().getFullName());
         String phone = order.getCustomer().getPhone();
         if (phone != null && !phone.startsWith("+")) {
             phone = "+" + phone;

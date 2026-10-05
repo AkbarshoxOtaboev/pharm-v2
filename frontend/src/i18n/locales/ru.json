@@ -21,6 +21,7 @@
     "courierStock": "Запас курьера",
     "cash": "Ежедневные отчёты",
     "courierReports": "Отчёты по курьерам",
+    "createOrder": "Создать заказ",
     "saleLogs": "Журнал продаж",
     "profile": "Профиль"
   },
@@ -151,7 +152,7 @@
     },
     "cashStatus": {
       "ON_COURIER": "У курьера",
-      "RETURNED": "Возвращено"
+      "ON_ADMIN": "Возвращено"
     },
     "stockAction": {
       "INCOME": "Приход",
@@ -207,14 +208,22 @@
     "confirmStatusTitle": "Изменить статус?",
     "confirmStatusText": "Статус заказа #{id} изменить с «{from}» на «{to}»?",
     "statusUpdated": "Статус обновлён",
-    "searchCustomer": "Поиск клиента",
-    "byPhone": "По телефону",
+    "customerSearching": "Поиск клиента…",
+    "customerFound": "Клиент найден: {name}",
+    "customerNew": "Не найден в базе — будет создан новый клиент",
     "customerAndAddress": "Клиент и адрес",
     "fullName": "ФИО",
     "paymentType": "Тип оплаты",
-    "estimatedTotal": "Предварительная сумма: {amount}",
     "created": "Заказ создан",
-    "inStock": "склад"
+    "delivery": "Доставка",
+    "summary": "Итог заказа",
+    "addProduct": "Добавить товар",
+    "createOrder": "Создать заказ",
+    "selectCourierFirst": "Чтобы выбрать товары, сначала выберите курьера",
+    "courierEmpty": "У этого курьера не осталось товаров",
+    "onCourier": "У курьера: {qty} {unit}",
+    "remainingAfter": "Останется после заказа: {qty} {unit}",
+    "notEnough": "Недостаточно: не хватает {qty} {unit}"
   },
   "users": {
     "title": "Пользователи",
@@ -233,7 +242,11 @@
     "title": "Клиенты",
     "all": "Все клиенты",
     "searchHint": "Поиск: {q}",
-    "searchByPhone": "Поиск по телефону",
+    "searchLabel": "Поиск по имени или телефону",
+    "searchPlaceholder": "Например: Азиз или 90 123 45 67",
+    "orderCount": "Заказы",
+    "orderSum": "Сумма заказов",
+    "avgCheck": "Средний чек",
     "notFound": "Клиенты не найдены",
     "fullName": "Имя",
     "gender": "Пол",
@@ -340,7 +353,14 @@
   "saleLogs": {
     "title": "Журнал продаж",
     "subtitle": "История продаж товаров",
-    "notFound": "Записи не найдены"
+    "notFound": "Записи не найдены",
+    "currentMonth": "Текущий месяц",
+    "live": "В реальном времени",
+    "updatedAt": "Обновлено: {time}",
+    "totalSum": "Общая сумма продаж",
+    "ordersCount": "Заказы",
+    "soldQty": "Продано товаров",
+    "bonusQty": "Бонусные товары"
   },
   "profile": {
     "title": "Мой профиль",
@@ -370,6 +390,10 @@
     "searchCustomer": "Не удалось найти клиента",
     "minOneProduct": "Добавьте хотя бы один товар",
     "customerNamePhoneRequired": "Имя и телефон клиента обязательны",
+    "phoneIncomplete": "Введите номер полностью: +998-(xx)-xxx-xx-xx",
+    "courierRequired": "Выберите курьера",
+    "dateRangeInvalid": "Дата начала не может быть позже даты окончания",
+    "notEnoughOnCourier": "У курьера недостаточно «{product}»",
     "createOrder": "Не удалось создать заказ",
     "invalidOrderId": "Некорректный ID заказа",
     "loadOrder": "Не удалось загрузить заказ",

@@ -429,6 +429,7 @@ onMounted(async () => {
                 <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.product') }}</th>
                 <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.quantity') }}</th>
                 <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.price') }}</th>
+                <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.amount') }}</th>
                 <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.bonus') }}</th>
               </tr>
             </thead>
@@ -436,11 +437,12 @@ onMounted(async () => {
               <tr v-for="(item, i) in detail.items || []" :key="i">
                 <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ item.productName || item.productId }}</td>
                 <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ item.quantity ?? 0 }}</td>
-                <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(item.productCost) }}</td>
+                <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(item.price) }}</td>
+                <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(item.totalSum) }}</td>
                 <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ item.isBonus ? t('common.yes') : t('common.no') }}</td>
               </tr>
               <tr v-if="!(detail.items && detail.items.length)">
-                <td colspan="4" class="px-5 py-4 text-center text-theme-sm text-gray-500 dark:text-gray-400">
+                <td colspan="5" class="px-5 py-4 text-center text-theme-sm text-gray-500 dark:text-gray-400">
                   {{ t('orders.noProducts') }}
                 </td>
               </tr>

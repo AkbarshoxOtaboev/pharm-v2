@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 public class SaleLogResponse {
+    private Long id;
     private Long orderId;
     private Long categoryId;
     private String categoryName;
@@ -21,7 +22,7 @@ public class SaleLogResponse {
     private BigDecimal productPriceCost;
     private BigDecimal quantity;
     private BigDecimal totalSum;
-    private boolean isBonus;
+    private Boolean isBonus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

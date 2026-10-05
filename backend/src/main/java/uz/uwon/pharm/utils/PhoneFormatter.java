@@ -13,4 +13,10 @@ public class PhoneFormatter {
                 "-" + phone.substring(8, 10) +
                 "-" + phone.substring(10, 12);
     }
+
+    public static String normalize(String phone) {
+        if (phone == null) return null;
+        String digits = phone.replaceAll("[^0-9]", "");
+        return digits.length() == 9 ? "998" + digits : digits;
+    }
 }

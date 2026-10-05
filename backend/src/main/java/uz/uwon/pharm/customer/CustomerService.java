@@ -1,5 +1,7 @@
 package uz.uwon.pharm.customer;
 
+import org.springframework.data.domain.Page;
+
 import java.util.List;
 
 public interface CustomerService {
@@ -11,4 +13,5 @@ public interface CustomerService {
     void restore(Long id);
     boolean existsByPhone(String phone);
     CustomerResponse search(String phone);
+    Page<CustomerStatsResponse> pageWithStats(String query, int page, int size);
 }

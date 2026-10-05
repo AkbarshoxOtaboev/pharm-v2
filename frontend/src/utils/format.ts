@@ -11,6 +11,20 @@ export function money(v?: number | string | null) {
   return negative ? `-${body}` : body
 }
 
+/** "2026-10-05T20:54:50.41" -> "05.10.2026 20:54" */
+export function dateTime(v?: string | null) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/.exec(v ?? '')
+  if (!m) return v ?? ''
+  const date = `${m[3]}.${m[2]}.${m[1]}`
+  return m[4] ? `${date} ${m[4]}:${m[5]}` : date
+}
+
+export function isoDate(d: Date) {
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${month}-${day}`
+}
+
 export function apiError(e: unknown, fallback = 'errors.generic') {
   const { t, te } = i18n.global
   const err = e as {
@@ -65,7 +79,7 @@ function mapBackendMessage(message: string) {
 
 export function statusTone(status?: string) {
   const s = (status || '').toUpperCase()
-  if (['ACTIVE', 'DELIVERED', 'CONFIRMED', 'RETURNED'].includes(s)) return 'success' as const
+  if (['ACTIVE', 'DELIVERED', 'CONFIRMED', 'ON_ADMIN'].includes(s)) return 'success' as const
   if (['PENDING', 'PROCESSING'].includes(s)) return 'warning' as const
   if (['NEW', 'SHIPPED'].includes(s)) return 'brand' as const
   if (['CANCELLED', 'DELETED', 'BLOCKED', 'INACTIVE'].includes(s)) return 'error' as const

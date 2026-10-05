@@ -146,6 +146,27 @@ onMounted(() => {
           </div>
 
           <div class="flex items-center gap-2 sm:gap-3">
+            <RouterLink
+              to="/admin/orders/create"
+              class="inline-flex h-10 items-center gap-2 rounded-lg bg-success-500 px-3 text-theme-sm font-medium text-white shadow-theme-xs transition hover:bg-success-600 sm:px-4"
+              :title="t('nav.createOrder')"
+            >
+              <svg
+                class="size-5 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3 9.5H21L19.2 18.6C19.02 19.42 18.29 20 17.45 20H6.55C5.71 20 4.98 19.42 4.8 18.6L3 9.5Z" />
+                <path d="M8 9.5L11 4M16 9.5L13 4" />
+                <path d="M9.5 13.5V16.5M14.5 13.5V16.5" />
+              </svg>
+              <span class="hidden sm:inline">{{ t('nav.createOrder') }}</span>
+            </RouterLink>
             <LocaleSwitcher />
             <ThemeToggle />
             <UserMenu />

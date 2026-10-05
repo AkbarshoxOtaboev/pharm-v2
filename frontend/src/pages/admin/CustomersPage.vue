@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { enumLabel } from '@/i18n'
 import {
@@ -8,12 +8,12 @@ import {
   deleteAddress,
   deleteCustomer,
   fetchCustomerAddresses,
-  fetchCustomers,
-  searchCustomers,
+  fetchCustomersPage,
   updateCustomer,
 } from '@/api/customers.api'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -25,17 +25,24 @@ import type {
   AddressResponse,
   CustomerDTO,
   CustomerResponse,
+  CustomerStatsResponse,
   CustomerType,
   Gender,
 } from '@/types/api'
-import { apiError, statusTone } from '@/utils/format'
+import { apiError, money, statusTone } from '@/utils/format'
+import { formatUzPhone } from '@/utils/phone'
+
+const PAGE_SIZES = [50, 100, 150, 200, 250]
 
 const { t } = useI18n()
-const allCustomers = ref<CustomerResponse[]>([])
-const customers = ref<CustomerResponse[]>([])
+const customers = ref<CustomerStatsResponse[]>([])
 const loading = ref(false)
 const error = ref('')
-const searchPhone = ref('')
+const search = ref('')
+const page = ref(0)
+const size = ref(String(PAGE_SIZES[0]))
+const totalPages = ref(0)
+const totalElements = ref(0)
 
 const modalOpen = ref(false)
 const saving = ref(false)
@@ -67,8 +74,13 @@ const addrForm = reactive({
 })
 
 const filteredHint = computed(() =>
-  searchPhone.value.trim() ? t('customers.searchHint', { q: searchPhone.value }) : t('customers.all'),
+  search.value.trim() ? t('customers.searchHint', { q: search.value.trim() }) : t('customers.all'),
 )
+
+function displayPhone(phone?: string) {
+  if (!phone) return t('common.empty')
+  return /^998\d{9}$/.test(phone) ? formatUzPhone(phone) : phone
+}
 
 function resetForm() {
   form.fullName = ''
@@ -81,35 +93,44 @@ function resetForm() {
   formError.value = ''
 }
 
+let loadSeq = 0
 async function load() {
+  const seq = ++loadSeq
   loading.value = true
   error.value = ''
   try {
-    const res = await fetchCustomers()
-    allCustomers.value = res.data || []
-    customers.value = allCustomers.value
+    const res = await fetchCustomersPage({
+      q: search.value.trim() || undefined,
+      page: page.value,
+      size: Number(size.value),
+    })
+    if (seq !== loadSeq) return
+    customers.value = res.data || []
+    totalPages.value = res.meta?.totalPages ?? 1
+    totalElements.value = res.meta?.totalElements ?? customers.value.length
   } catch (e) {
-    error.value = apiError(e, 'errors.loadCustomers')
+    if (seq === loadSeq) error.value = apiError(e, 'errors.loadCustomers')
   } finally {
-    loading.value = false
+    if (seq === loadSeq) loading.value = false
   }
 }
 
-async function onSearch() {
-  if (!searchPhone.value.trim()) {
-    customers.value = allCustomers.value
-    return
-  }
-  loading.value = true
-  error.value = ''
-  try {
-    const res = await searchCustomers(searchPhone.value.trim())
-    customers.value = res.data || []
-  } catch (e) {
-    error.value = apiError(e, 'errors.searchFailed')
-  } finally {
-    loading.value = false
-  }
+let searchTimer: ReturnType<typeof setTimeout> | undefined
+watch(search, () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    page.value = 0
+    void load()
+  }, 350)
+})
+watch(size, () => {
+  page.value = 0
+  void load()
+})
+
+function goToPage(p: number) {
+  page.value = p
+  void load()
 }
 
 function openCreate() {
@@ -248,21 +269,19 @@ onMounted(load)
     </PageHeader>
 
     <div class="mb-4 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4 shadow-theme-xs">
-      <div class="flex flex-wrap items-end gap-2">
+      <div class="flex flex-wrap items-end gap-3">
         <AppInput
-          v-model="searchPhone"
+          v-model="search"
           class="min-w-64 flex-1"
-          :label="t('customers.searchByPhone')"
-          placeholder="+998..."
+          type="search"
+          autocomplete="off"
+          :label="t('customers.searchLabel')"
+          :placeholder="t('customers.searchPlaceholder')"
         />
-        <AppButton @click="onSearch">{{ t('common.search') }}</AppButton>
-        <AppButton
-          variant="secondary"
-          @click="
-            searchPhone = '';
-            customers = allCustomers
-          "
-        >
+        <AppSelect v-model="size" :label="t('common.limit')" class="w-28">
+          <option v-for="s in PAGE_SIZES" :key="s" :value="String(s)">{{ s }}</option>
+        </AppSelect>
+        <AppButton v-if="search" variant="secondary" @click="search = ''">
           {{ t('common.clear') }}
         </AppButton>
       </div>
@@ -282,28 +301,68 @@ onMounted(load)
       <template #head>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('customers.fullName') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.phone') }}</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('customers.gender') }}</th>
+        <th class="px-5 py-3 text-right text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('customers.orderCount') }}</th>
+        <th class="px-5 py-3 text-right text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('customers.orderSum') }}</th>
+        <th class="px-5 py-3 text-right text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('customers.avgCheck') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('customers.type') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.status') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.actions') }}</th>
       </template>
       <tr v-for="c in customers" :key="c.id">
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ c.fullName }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ c.phone }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ enumLabel('gender', c.gender, t('common.empty')) }}</td>
+        <td class="max-w-72 px-5 py-3 text-theme-sm text-gray-800 dark:text-white/90">
+          <p class="line-clamp-2" :title="c.fullName">{{ c.fullName || t('common.empty') }}</p>
+        </td>
+        <td class="whitespace-nowrap px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ displayPhone(c.phone) }}</td>
+        <td class="px-5 py-3 text-right text-theme-sm font-medium text-gray-800 dark:text-white/90">{{ c.orderCount }}</td>
+        <td class="whitespace-nowrap px-5 py-3 text-right text-theme-sm font-medium text-gray-800 dark:text-white/90">{{ money(c.orderSum) }}</td>
+        <td class="whitespace-nowrap px-5 py-3 text-right text-theme-sm text-gray-700 dark:text-gray-300">{{ c.orderCount ? money(c.avgCheck) : t('common.empty') }}</td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ enumLabel('customerType', c.type, t('common.empty')) }}</td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <AppBadge :tone="statusTone(c.status)">{{ enumLabel('status', c.status, t('common.empty')) }}</AppBadge>
         </td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
-          <div class="flex flex-wrap gap-2">
-            <AppButton size="sm" variant="secondary" @click="openEdit(c)">{{ t('common.edit') }}</AppButton>
-            <AppButton size="sm" variant="ghost" @click="openAddresses(c)">{{ t('customers.addresses') }}</AppButton>
-            <AppButton size="sm" variant="danger" @click="onDelete(c)">{{ t('common.delete') }}</AppButton>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-brand-50 hover:text-brand-500 dark:text-gray-400 dark:hover:bg-brand-500/10"
+              :title="t('common.edit')"
+              @click="openEdit(c)"
+            >
+              <AppIcon name="pencil" class="size-4.5" />
+            </button>
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white/90"
+              :title="t('customers.addresses')"
+              @click="openAddresses(c)"
+            >
+              <AppIcon name="map-pin" class="size-4.5" />
+            </button>
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-error-50 hover:text-error-500 dark:text-gray-400 dark:hover:bg-error-500/10"
+              :title="t('common.delete')"
+              @click="onDelete(c)"
+            >
+              <AppIcon name="trash" class="size-4.5" />
+            </button>
           </div>
         </td>
       </tr>
     </DataTable>
+
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+      <p class="text-theme-sm text-gray-500 dark:text-gray-400">{{ t('common.total') }}: {{ totalElements }}</p>
+      <div class="flex items-center gap-2">
+        <AppButton size="sm" variant="secondary" :disabled="loading || page <= 0" @click="goToPage(page - 1)">
+          {{ t('common.previous') }}
+        </AppButton>
+        <span class="text-theme-sm text-gray-600 dark:text-gray-400">{{ page + 1 }} / {{ totalPages || 1 }}</span>
+        <AppButton size="sm" variant="secondary" :disabled="loading || page + 1 >= totalPages" @click="goToPage(page + 1)">
+          {{ t('common.next') }}
+        </AppButton>
+      </div>
+    </div>
 
     <AppModal
       :open="modalOpen"

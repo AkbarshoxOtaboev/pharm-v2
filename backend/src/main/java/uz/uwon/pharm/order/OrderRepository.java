@@ -23,6 +23,8 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     Optional<Order> findOrderById(Long id);
 
+    Optional<Order> findFirstByCustomerIdOrderByIdDesc(Long customerId);
+
     @Query("""
                 SELECT COUNT(o)
                 FROM Order o

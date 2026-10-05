@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.*;
 import uz.uwon.pharm.address.AddressDTO;
 import uz.uwon.pharm.address.AddressResponse;
 import uz.uwon.pharm.address.AddressService;
+import org.springframework.data.domain.Page;
 import uz.uwon.pharm.common.ApiResponse;
+import uz.uwon.pharm.common.PageMeta;
 
 import java.util.List;
 import java.util.Map;
@@ -23,6 +25,15 @@ public class CustomersApiController {
     @GetMapping
     public ApiResponse<List<CustomerResponse>> list() {
         return ApiResponse.ok(customerService.findAll());
+    }
+
+    @GetMapping("/page")
+    public ApiResponse<List<CustomerStatsResponse>> page(
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        Page<CustomerStatsResponse> result = customerService.pageWithStats(q, page, size);
+        return ApiResponse.ok(result.getContent(), PageMeta.from(result));
     }
 
     @GetMapping("/search")

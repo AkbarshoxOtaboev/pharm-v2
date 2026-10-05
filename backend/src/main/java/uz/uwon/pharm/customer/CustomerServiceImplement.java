@@ -2,11 +2,17 @@ package uz.uwon.pharm.customer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.uwon.pharm.exceptions.NotFoundException;
+import uz.uwon.pharm.order.OrderRepository;
+import uz.uwon.pharm.utils.PhoneFormatter;
 import uz.uwon.pharm.utils.Status;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,13 +23,14 @@ import java.util.stream.Collectors;
 public class CustomerServiceImplement implements CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final OrderRepository orderRepository;
 
     @Override
     public void save(CustomerDTO customerDTO) {
         log.info("Saving customer");
         Customer customer = Customer.builder()
                 .fullName(customerDTO.getFullName())
-                .phone(customerDTO.getPhone().replaceAll("[^0-9]", ""))
+                .phone(PhoneFormatter.normalize(customerDTO.getPhone()))
                 .birthDate(customerDTO.getBirthDate())
                 .description(customerDTO.getDescription())
                 .gender(customerDTO.getGender())
@@ -50,7 +57,7 @@ public class CustomerServiceImplement implements CustomerService {
         log.info("Updating customer with id {}", id);
         Customer customer = customerRepository.findByIdAndStatus(id, Status.ACTIVE).orElseThrow(()->new NotFoundException("Customer with id " + id + " not found!"));
         customer.setFullName(customerDTO.getFullName());
-        customer.setPhone(customerDTO.getPhone());
+        customer.setPhone(PhoneFormatter.normalize(customerDTO.getPhone()));
         customer.setBirthDate(customerDTO.getBirthDate());
         customer.setDescription(customerDTO.getDescription());
         customer.setType(customerDTO.getType());
@@ -72,12 +79,53 @@ public class CustomerServiceImplement implements CustomerService {
 
     @Override
     public boolean existsByPhone(String phone) {
-        return customerRepository.existsByPhone(phone.replaceAll("[^0-9]", ""));
+        return customerRepository.existsByPhone(PhoneFormatter.normalize(phone));
     }
 
     @Override
     public CustomerResponse search(String phone) {
-        return customerRepository.findByPhone(phone).map(this::mapToCustomer).orElse(null);
+        return customerRepository.findByPhoneAndStatus(PhoneFormatter.normalize(phone), Status.ACTIVE)
+                .map(customer -> {
+                    CustomerResponse response = mapToCustomer(customer);
+                    orderRepository.findFirstByCustomerIdOrderByIdDesc(customer.getId())
+                            .ifPresent(order -> response.setLastAddress(order.getAddress()));
+                    return response;
+                })
+                .orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CustomerStatsResponse> pageWithStats(String query, int page, int size) {
+        String q = query == null ? "" : query.trim().toLowerCase();
+        String digits = q.replaceAll("[^0-9]", "");
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), Math.clamp(size, 1, 250));
+        return customerRepository.searchWithStats(
+                        q.isEmpty(),
+                        "%" + q + "%",
+                        digits.isEmpty() ? "#" : "%" + digits + "%",
+                        pageable)
+                .map(this::mapToStats);
+    }
+
+    private CustomerStatsResponse mapToStats(CustomerStatsView v) {
+        long count = v.getOrderCount() == null ? 0 : v.getOrderCount();
+        BigDecimal sum = v.getOrderSum() == null ? BigDecimal.ZERO : v.getOrderSum();
+        BigDecimal avg = count == 0 ? BigDecimal.ZERO : sum.divide(BigDecimal.valueOf(count), 0, RoundingMode.HALF_UP);
+        return new CustomerStatsResponse(
+                v.getId(),
+                v.getFullName(),
+                v.getPhone(),
+                v.getBirthDate(),
+                v.getDescription(),
+                v.getGender(),
+                v.getType(),
+                v.getStatus(),
+                v.getCreatedAt(),
+                count,
+                sum,
+                avg
+        );
     }
 
     private CustomerResponse mapToCustomer(Customer customer){
@@ -90,7 +138,8 @@ public class CustomerServiceImplement implements CustomerService {
                 customer.getGender(),
                 customer.getType(),
                 customer.getStatus(),
-                customer.getCreatedAt()
+                customer.getCreatedAt(),
+                null
         );
     }
 }

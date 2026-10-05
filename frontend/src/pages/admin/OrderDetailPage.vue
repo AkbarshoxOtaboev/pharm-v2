@@ -137,6 +137,7 @@ onMounted(load)
           <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.product') }}</th>
           <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.quantity') }}</th>
           <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.price') }}</th>
+          <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.amount') }}</th>
           <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.bonus') }}</th>
         </template>
         <tr v-for="(item, i) in detail.items || []" :key="i">
@@ -144,7 +145,8 @@ onMounted(load)
             {{ item.productName || item.productId }}
           </td>
           <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ item.quantity ?? 0 }}</td>
-          <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(item.productCost) }}</td>
+          <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(item.price) }}</td>
+          <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(item.totalSum) }}</td>
           <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ item.isBonus ? t('common.yes') : t('common.no') }}</td>
         </tr>
       </DataTable>

@@ -21,6 +21,7 @@
     "courierStock": "Kuryer zaxirasi",
     "cash": "Kunlik hisobotlar",
     "courierReports": "Kuryer hisobotlari",
+    "createOrder": "Buyurtma yaratish",
     "saleLogs": "Sotuv loglari",
     "profile": "Profil"
   },
@@ -151,7 +152,7 @@
     },
     "cashStatus": {
       "ON_COURIER": "Kuryerda",
-      "RETURNED": "Qaytarilgan"
+      "ON_ADMIN": "Qaytarilgan"
     },
     "stockAction": {
       "INCOME": "Kirim",
@@ -207,14 +208,22 @@
     "confirmStatusTitle": "Statusni o‘zgartirish?",
     "confirmStatusText": "#{id} buyurtma statusi «{from}» dan «{to}» ga o‘zgartirilsinmi?",
     "statusUpdated": "Status yangilandi",
-    "searchCustomer": "Mijoz qidirish",
-    "byPhone": "Telefon bo‘yicha",
+    "customerSearching": "Mijoz qidirilmoqda…",
+    "customerFound": "Mijoz topildi: {name}",
+    "customerNew": "Bazada topilmadi — yangi mijoz yaratiladi",
     "customerAndAddress": "Mijoz va manzil",
     "fullName": "To‘liq ism",
     "paymentType": "To‘lov turi",
-    "estimatedTotal": "Taxminiy summa: {amount}",
     "created": "Buyurtma yaratildi",
-    "inStock": "ombor"
+    "delivery": "Yetkazib berish",
+    "summary": "Buyurtma xulosasi",
+    "addProduct": "Mahsulot qo‘shish",
+    "createOrder": "Buyurtma yaratish",
+    "selectCourierFirst": "Mahsulot tanlash uchun avval kuryerni tanlang",
+    "courierEmpty": "Bu kuryerda mahsulot qolmagan",
+    "onCourier": "Kuryerda: {qty} {unit}",
+    "remainingAfter": "Buyurtmadan keyin qoladi: {qty} {unit}",
+    "notEnough": "Yetarli emas: {qty} {unit} kam"
   },
   "users": {
     "title": "Foydalanuvchilar",
@@ -233,7 +242,11 @@
     "title": "Mijozlar",
     "all": "Barcha mijozlar",
     "searchHint": "Qidiruv: {q}",
-    "searchByPhone": "Telefon bo‘yicha qidirish",
+    "searchLabel": "Ism yoki telefon bo‘yicha qidirish",
+    "searchPlaceholder": "Masalan: Aziz yoki 90 123 45 67",
+    "orderCount": "Buyurtmalar",
+    "orderSum": "Buyurtmalar summasi",
+    "avgCheck": "O‘rtacha chek",
     "notFound": "Mijozlar topilmadi",
     "fullName": "Ism",
     "gender": "Jins",
@@ -340,7 +353,14 @@
   "saleLogs": {
     "title": "Sotuv loglari",
     "subtitle": "Mahsulot sotuvlari tarixi",
-    "notFound": "Loglar topilmadi"
+    "notFound": "Loglar topilmadi",
+    "currentMonth": "Joriy oy",
+    "live": "Real vaqtda",
+    "updatedAt": "Yangilandi: {time}",
+    "totalSum": "Jami sotuv summasi",
+    "ordersCount": "Buyurtmalar",
+    "soldQty": "Sotilgan mahsulotlar",
+    "bonusQty": "Bonus mahsulotlar"
   },
   "profile": {
     "title": "Mening profilim",
@@ -370,6 +390,10 @@
     "searchCustomer": "Mijozni qidirib bo‘lmadi",
     "minOneProduct": "Kamida bitta mahsulot qo‘shing",
     "customerNamePhoneRequired": "Mijoz ismi va telefon majburiy",
+    "phoneIncomplete": "Telefon raqamini to‘liq kiriting: +998-(xx)-xxx-xx-xx",
+    "courierRequired": "Kuryerni tanlang",
+    "dateRangeInvalid": "Boshlanish sanasi tugash sanasidan keyin bo‘lmasligi kerak",
+    "notEnoughOnCourier": "«{product}» kuryerda yetarli emas",
     "createOrder": "Buyurtmani yaratib bo‘lmadi",
     "invalidOrderId": "Noto‘g‘ri buyurtma ID",
     "loadOrder": "Buyurtmani yuklab bo‘lmadi",

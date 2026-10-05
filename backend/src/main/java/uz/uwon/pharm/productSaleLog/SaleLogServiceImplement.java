@@ -3,8 +3,10 @@ package uz.uwon.pharm.productSaleLog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -33,16 +35,8 @@ public class SaleLogServiceImplement implements SaleLogService {
 
     @Override
     public List<SaleLogResponse> fetchAllSaleList(LocalDate start, LocalDate end) {
-        LocalDateTime startDateTime = null;
-        LocalDateTime endDateTime = null;
-
-        if (start != null) {
-            startDateTime = start.atStartOfDay();
-        }
-
-        if (end != null) {
-            endDateTime = end.atTime(23, 59, 59);
-        }
+        LocalDateTime startDateTime = start != null ? start.atStartOfDay() : LocalDateTime.of(1970, 1, 1, 0, 0);
+        LocalDateTime endDateTime = end != null ? end.atTime(LocalTime.MAX) : LocalDateTime.now();
         return repository.findAllByCreatedAtBetweenOrderByIdDesc(startDateTime, endDateTime)
                 .stream()
                 .map(this::mapToResponse)
@@ -51,6 +45,7 @@ public class SaleLogServiceImplement implements SaleLogService {
 
     private SaleLogResponse mapToResponse(SaleLog saleLog){
         return new SaleLogResponse(
+                saleLog.getId(),
                 saleLog.getOrderId(),
                 saleLog.getCategoryId(),
                 saleLog.getCategoryName(),
@@ -60,7 +55,7 @@ public class SaleLogServiceImplement implements SaleLogService {
                 saleLog.getProductName(),
                 saleLog.getProductPriceCost(),
                 saleLog.getQuantity(),
-                saleLog.getTotalSum(),
+                saleLog.isBonus() ? BigDecimal.ZERO : saleLog.getTotalSum(),
                 saleLog.isBonus(),
                 saleLog.getCreatedAt(),
                 saleLog.getUpdatedAt()

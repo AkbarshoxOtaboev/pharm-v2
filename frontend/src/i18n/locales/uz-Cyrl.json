@@ -21,6 +21,7 @@
     "courierStock": "Курьер захираси",
     "cash": "Кунлик ҳисоботлар",
     "courierReports": "Курьер ҳисоботлари",
+    "createOrder": "Буюртма яратиш",
     "saleLogs": "Сотув логлари",
     "profile": "Профил"
   },
@@ -151,7 +152,7 @@
     },
     "cashStatus": {
       "ON_COURIER": "Курьерда",
-      "RETURNED": "Қайтарилган"
+      "ON_ADMIN": "Қайтарилган"
     },
     "stockAction": {
       "INCOME": "Кирим",
@@ -207,14 +208,22 @@
     "confirmStatusTitle": "Статусни ўзгартириш?",
     "confirmStatusText": "#{id} буюртма статуси «{from}» дан «{to}» га ўзгартирилсинми?",
     "statusUpdated": "Статус янгиланди",
-    "searchCustomer": "Мижоз қидириш",
-    "byPhone": "Телефон бўйича",
+    "customerSearching": "Мижоз қидирилмоқда…",
+    "customerFound": "Мижоз топилди: {name}",
+    "customerNew": "Базада топилмади — янги мижоз яратилади",
     "customerAndAddress": "Мижоз ва манзил",
     "fullName": "Тўлиқ исм",
     "paymentType": "Тўлов тури",
-    "estimatedTotal": "Тахминий сумма: {amount}",
     "created": "Буюртма яратилди",
-    "inStock": "омбор"
+    "delivery": "Етказиб бериш",
+    "summary": "Буюртма хулосаси",
+    "addProduct": "Маҳсулот қўшиш",
+    "createOrder": "Буюртма яратиш",
+    "selectCourierFirst": "Маҳсулот танлаш учун аввал курьерни танланг",
+    "courierEmpty": "Бу курьерда маҳсулот қолмаган",
+    "onCourier": "Курьерда: {qty} {unit}",
+    "remainingAfter": "Буюртмадан кейин қолади: {qty} {unit}",
+    "notEnough": "Етарли эмас: {qty} {unit} кам"
   },
   "users": {
     "title": "Фойдаланувчилар",
@@ -233,7 +242,11 @@
     "title": "Мижозлар",
     "all": "Барча мижозлар",
     "searchHint": "Қидирув: {q}",
-    "searchByPhone": "Телефон бўйича қидириш",
+    "searchLabel": "Исм ёки телефон бўйича қидириш",
+    "searchPlaceholder": "Масалан: Азиз ёки 90 123 45 67",
+    "orderCount": "Буюртмалар",
+    "orderSum": "Буюртмалар суммаси",
+    "avgCheck": "Ўртача чек",
     "notFound": "Мижозлар топилмади",
     "fullName": "Исм",
     "gender": "Жинс",
@@ -340,7 +353,14 @@
   "saleLogs": {
     "title": "Сотув логлари",
     "subtitle": "Маҳсулот сотувлари тарихи",
-    "notFound": "Логлар топилмади"
+    "notFound": "Логлар топилмади",
+    "currentMonth": "Жорий ой",
+    "live": "Реал вақтда",
+    "updatedAt": "Янгиланди: {time}",
+    "totalSum": "Жами сотув суммаси",
+    "ordersCount": "Буюртмалар",
+    "soldQty": "Сотилган маҳсулотлар",
+    "bonusQty": "Бонус маҳсулотлар"
   },
   "profile": {
     "title": "Менинг профилим",
@@ -370,6 +390,10 @@
     "searchCustomer": "Мижозни қидириб бўлмади",
     "minOneProduct": "Камида битта маҳсулот қўшинг",
     "customerNamePhoneRequired": "Мижоз исми ва телефон мажбурий",
+    "phoneIncomplete": "Телефон рақамини тўлиқ киритинг: +998-(xx)-xxx-xx-xx",
+    "courierRequired": "Курьерни танланг",
+    "dateRangeInvalid": "Бошланиш санаси тугаш санасидан кейин бўлмаслиги керак",
+    "notEnoughOnCourier": "«{product}» курьерда етарли эмас",
     "createOrder": "Буюртмани яратиб бўлмади",
     "invalidOrderId": "Нотўғри буюртма ID",
     "loadOrder": "Буюртмани юклаб бўлмади",

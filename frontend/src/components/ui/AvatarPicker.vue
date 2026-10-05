@@ -48,7 +48,7 @@ function onFile(e: Event) {
       <img
         v-if="model && !model.startsWith('default-')"
         :src="resolveAvatarUrl(model)"
-        alt="Uploaded"
+        :alt="t('profile.avatar')"
         class="size-12 rounded-full object-cover ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-gray-dark"
       />
     </div>

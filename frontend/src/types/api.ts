@@ -126,11 +126,15 @@ export interface CourierStatsResponse {
 }
 
 export interface OrderItemResponse {
+  id?: number
   productId?: number
   productName?: string
   quantity?: number
-  productCost?: number
+  price?: number
+  totalSum?: number
   isBonus?: boolean
+  type?: string
+  storeQuantity?: number
 }
 
 export interface OrderDetailResponse {
@@ -183,6 +187,13 @@ export interface CustomerResponse {
   type?: CustomerType
   status?: Status
   createdAt?: string
+  lastAddress?: string | null
+}
+
+export interface CustomerStatsResponse extends CustomerResponse {
+  orderCount: number
+  orderSum: number
+  avgCheck: number
 }
 
 export interface CustomerDTO {
