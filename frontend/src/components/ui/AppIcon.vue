@@ -78,6 +78,14 @@ defineProps<{ name: string }>()
     <template v-else-if="name === 'arrow-left'">
       <path d="M19 12H5M11 6L5 12L11 18" />
     </template>
+    <template v-else-if="name === 'eye'">
+      <path d="M2.5 12C4.5 7.5 8 5 12 5C16 5 19.5 7.5 21.5 12C19.5 16.5 16 19 12 19C8 19 4.5 16.5 2.5 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </template>
+    <template v-else-if="name === 'eye-off'">
+      <path d="M10.6 5.1C11.06 5.03 11.53 5 12 5C16 5 19.5 7.5 21.5 12C20.93 13.28 20.2 14.4 19.35 15.33M6.6 6.6C4.85 7.72 3.45 9.6 2.5 12C4.5 16.5 8 19 12 19C13.95 19 15.77 18.4 17.35 17.35" />
+      <path d="M9.9 9.9C9.34 10.46 9 11.23 9 12C9 13.66 10.34 15 12 15C12.77 15 13.54 14.66 14.1 14.1M3 3L21 21" />
+    </template>
     <circle v-else cx="12" cy="12" r="4" fill="currentColor" />
   </svg>
 </template>

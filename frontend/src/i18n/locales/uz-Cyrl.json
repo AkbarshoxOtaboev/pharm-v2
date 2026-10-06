@@ -99,6 +99,11 @@
   },
   "auth": {
     "signIn": "Кириш",
+    "signInSubtitle": "Тизимга кириш учун логин ва паролингизни киритинг!",
+    "loginPlaceholder": "Логинни киритинг",
+    "passwordPlaceholder": "Паролни киритинг",
+    "showPassword": "Паролни кўрсатиш",
+    "hidePassword": "Паролни яшириш",
     "loginFailed": "Логин муваффақиятсиз",
     "editProfile": "Профилни таҳрирлаш",
     "accountSettings": "Ҳисоб созламалари"

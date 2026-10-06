@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.store'
 import AppButton from '@/components/ui/AppButton.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import ThemeToggle from '@/components/layout/ThemeToggle.vue'
 import LocaleSwitcher from '@/components/layout/LocaleSwitcher.vue'
@@ -15,6 +16,7 @@ const { t } = useI18n()
 
 const username = ref('')
 const password = ref('')
+const showPassword = ref(false)
 const loading = ref(false)
 const error = ref('')
 
@@ -33,58 +35,59 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
-    <div
-      class="absolute inset-0 bg-cover bg-center bg-no-repeat"
-      style="background-image: url('/login-bg.png')"
-    />
-    <div class="absolute inset-0 bg-gray-950/45" />
+  <div class="flex min-h-screen bg-white dark:bg-gray-900">
+    <div class="flex w-full flex-col p-6 lg:w-1/2">
+      <div class="flex items-center justify-end gap-2">
+        <LocaleSwitcher />
+        <ThemeToggle />
+      </div>
 
-    <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
-      <LocaleSwitcher />
-      <ThemeToggle />
+      <div class="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
+        <div class="mb-5 sm:mb-8">
+          <h1 class="mb-2 text-2xl font-semibold text-gray-800 sm:text-3xl dark:text-white/90">
+            {{ t('auth.signIn') }}
+          </h1>
+          <p class="text-theme-sm text-gray-500 dark:text-gray-400">{{ t('auth.signInSubtitle') }}</p>
+        </div>
+
+        <div
+          v-if="error"
+          class="mb-5 flex items-start gap-2 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
+        >
+          <AppIcon name="alert" class="mt-0.5 size-4" />
+          <span>{{ error }}</span>
+        </div>
+
+        <form class="space-y-5" @submit.prevent="onSubmit">
+          <AppInput
+            v-model="username"
+            :label="t('common.login')"
+            :placeholder="t('auth.loginPlaceholder')"
+            autocomplete="username"
+          />
+          <div class="relative [&_input]:pr-12">
+            <AppInput
+              v-model="password"
+              :label="t('common.password')"
+              :placeholder="t('auth.passwordPlaceholder')"
+              :type="showPassword ? 'text' : 'password'"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              class="absolute right-0 bottom-0 flex h-11 w-12 items-center justify-center text-gray-500 transition hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              :title="showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
+              :aria-label="showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
+              @click="showPassword = !showPassword"
+            >
+              <AppIcon :name="showPassword ? 'eye-off' : 'eye'" />
+            </button>
+          </div>
+          <AppButton class="w-full" type="submit" :loading="loading">{{ t('auth.signIn') }}</AppButton>
+        </form>
+      </div>
     </div>
 
-    <form
-      class="relative w-full max-w-md rounded-2xl border border-white/25 bg-white/20 p-8 shadow-theme-md backdrop-blur-xl"
-      @submit.prevent="onSubmit"
-    >
-      <div
-        v-if="error"
-        class="mb-4 rounded-xl border border-error-200/60 bg-error-50/80 px-4 py-3 text-theme-sm text-error-700"
-      >
-        {{ error }}
-      </div>
-
-      <div class="space-y-4">
-        <AppInput v-model="username" :label="t('common.login')" autocomplete="username" />
-        <AppInput
-          v-model="password"
-          :label="t('common.password')"
-          type="password"
-          autocomplete="current-password"
-        />
-        <AppButton class="w-full" type="submit" :loading="loading">{{ t('auth.signIn') }}</AppButton>
-      </div>
-    </form>
+    <div class="hidden bg-brand-950 lg:block lg:w-1/2 dark:bg-white/5" />
   </div>
 </template>
-
-<style scoped>
-:deep(label span) {
-  color: rgba(255, 255, 255, 0.92);
-}
-:deep(input) {
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
-  box-shadow: none;
-}
-:deep(input::placeholder) {
-  color: rgba(255, 255, 255, 0.55);
-}
-:deep(input:focus) {
-  border-color: rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.28);
-}
-</style>

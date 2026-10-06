@@ -26,8 +26,8 @@ import { UZ_PHONE_PLACEHOLDER, formatUzPhone, uzPhoneDigits } from '@/utils/phon
 
 interface LineItem {
   key: number
-  productId: string
-  quantity: string
+  productId: number
+  quantity: number
   isBonus: boolean
 }
 
@@ -62,8 +62,9 @@ const stockLoading = ref(false)
 let stockSeq = 0
 
 let lineKey = 0
-const newLine = (): LineItem => ({ key: ++lineKey, productId: '', quantity: '1', isBonus: false })
-const items = ref<LineItem[]>([newLine()])
+const emptyDraft = () => ({ productId: '', quantity: '1', isBonus: false })
+const draft = ref(emptyDraft())
+const items = ref<LineItem[]>([])
 
 const availableStock = computed(() =>
   stock.value.filter((s) => Number(s.quantity ?? 0) > 0),
@@ -73,46 +74,46 @@ const stockById = computed(() => new Map(stock.value.map((s) => [s.productId, s]
 const requestedById = computed(() => {
   const map = new Map<number, number>()
   for (const item of items.value) {
-    if (!item.productId) continue
-    const id = Number(item.productId)
-    map.set(id, (map.get(id) ?? 0) + Number(item.quantity || 0))
+    map.set(item.productId, (map.get(item.productId) ?? 0) + item.quantity)
   }
   return map
 })
 
-function stockOf(item: LineItem) {
-  return item.productId ? stockById.value.get(Number(item.productId)) : undefined
+function stockOf(productId: number) {
+  return stockById.value.get(productId)
 }
 
-function priceOf(item: LineItem) {
-  const id = Number(item.productId)
-  if (!id) return 0
-  return priceById.value.get(id) ?? Number(stockById.value.get(id)?.productPrice ?? 0)
+function priceOf(productId: number) {
+  if (!productId) return 0
+  return priceById.value.get(productId) ?? Number(stockOf(productId)?.productPrice ?? 0)
 }
 
 function lineSum(item: LineItem) {
-  return item.isBonus ? 0 : priceOf(item) * Number(item.quantity || 0)
+  return item.isBonus ? 0 : priceOf(item.productId) * item.quantity
 }
 
-function onCourier(item: LineItem) {
-  return Number(stockOf(item)?.quantity ?? 0)
+function onCourier(productId: number) {
+  return Number(stockOf(productId)?.quantity ?? 0)
 }
 
-function remainingAfter(item: LineItem) {
-  return onCourier(item) - (requestedById.value.get(Number(item.productId)) ?? 0)
+function availableFor(productId: number) {
+  return onCourier(productId) - (requestedById.value.get(productId) ?? 0)
 }
 
-function unitLabel(item: LineItem) {
-  return enumLabel('unitType', stockOf(item)?.unitType, '')
+function unitLabel(productId: number) {
+  return enumLabel('unitType', stockOf(productId)?.unitType, '')
 }
 
-const filledItems = computed(() =>
-  items.value.filter((i) => i.productId && Number(i.quantity) > 0),
-)
-const total = computed(() => filledItems.value.reduce((sum, i) => sum + lineSum(i), 0))
-const paidCount = computed(() => filledItems.value.filter((i) => !i.isBonus).length)
-const bonusCount = computed(() => filledItems.value.filter((i) => i.isBonus).length)
-const overStock = computed(() => filledItems.value.find((i) => remainingAfter(i) < 0))
+const draftProductId = computed(() => Number(draft.value.productId) || 0)
+const draftQty = computed(() => Number(draft.value.quantity) || 0)
+const draftRemaining = computed(() => availableFor(draftProductId.value) - draftQty.value)
+const draftSum = computed(() => (draft.value.isBonus ? 0 : priceOf(draftProductId.value) * draftQty.value))
+const canAdd = computed(() => draftProductId.value > 0 && draftQty.value > 0 && draftRemaining.value >= 0)
+
+const total = computed(() => items.value.reduce((sum, i) => sum + lineSum(i), 0))
+const paidCount = computed(() => items.value.filter((i) => !i.isBonus).length)
+const bonusCount = computed(() => items.value.filter((i) => i.isBonus).length)
+const overStock = computed(() => items.value.find((i) => availableFor(i.productId) < 0))
 
 async function loadLookups() {
   try {
@@ -140,9 +141,8 @@ watch(courierId, async (id) => {
     const res = await fetchCourierStock(Number(id))
     if (seq !== stockSeq) return
     stock.value = res.data || []
-    for (const item of items.value) {
-      if (item.productId && !stockById.value.has(Number(item.productId))) item.productId = ''
-    }
+    items.value = items.value.filter((i) => stockById.value.has(i.productId))
+    if (draftProductId.value && !stockById.value.has(draftProductId.value)) draft.value.productId = ''
   } catch (e) {
     if (seq === stockSeq) error.value = apiError(e, 'errors.loadData')
   } finally {
@@ -190,12 +190,17 @@ async function searchByPhone(digits: string) {
 }
 
 function addItem() {
-  items.value.push(newLine())
+  if (!canAdd.value) return
+  const productId = draftProductId.value
+  const { isBonus } = draft.value
+  const existing = items.value.find((i) => i.productId === productId && i.isBonus === isBonus)
+  if (existing) existing.quantity += draftQty.value
+  else items.value.push({ key: ++lineKey, productId, quantity: draftQty.value, isBonus })
+  draft.value = emptyDraft()
 }
 
-function removeItem(idx: number) {
-  items.value.splice(idx, 1)
-  if (!items.value.length) addItem()
+function removeItem(key: number) {
+  items.value = items.value.filter((i) => i.key !== key)
 }
 
 async function submit() {
@@ -214,20 +219,20 @@ async function submit() {
     error.value = t('errors.courierRequired')
     return
   }
-  if (!filledItems.value.length) {
+  if (!items.value.length) {
     error.value = t('errors.minOneProduct')
     return
   }
   if (overStock.value) {
     error.value = t('errors.notEnoughOnCourier', {
-      product: stockOf(overStock.value)?.productName ?? '',
+      product: stockOf(overStock.value.productId)?.productName ?? '',
     })
     return
   }
 
-  const mapped: OrderItemDTO[] = filledItems.value.map((i) => ({
-    productId: Number(i.productId),
-    quantity: Number(i.quantity),
+  const mapped: OrderItemDTO[] = items.value.map((i) => ({
+    productId: i.productId,
+    quantity: i.quantity,
     isBonus: i.isBonus,
   }))
 
@@ -322,17 +327,11 @@ onMounted(loadLookups)
 
         <!-- Products -->
         <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
-          <div class="mb-4 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-3">
-              <span class="flex size-9 items-center justify-center rounded-lg bg-brand-50 text-brand-500 dark:bg-brand-500/15">
-                <AppIcon name="basket" />
-              </span>
-              <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ t('orders.products') }}</h2>
-            </div>
-            <AppButton type="button" size="sm" variant="secondary" :disabled="!availableStock.length" @click="addItem">
-              <AppIcon name="plus" class="size-4" />
-              {{ t('orders.addProduct') }}
-            </AppButton>
+          <div class="mb-4 flex items-center gap-3">
+            <span class="flex size-9 items-center justify-center rounded-lg bg-brand-50 text-brand-500 dark:bg-brand-500/15">
+              <AppIcon name="basket" />
+            </span>
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ t('orders.products') }}</h2>
           </div>
 
           <div
@@ -357,77 +356,138 @@ onMounted(loadLookups)
             {{ t('orders.courierEmpty') }}
           </div>
 
-          <div v-else class="space-y-3">
+          <div v-else class="space-y-4">
             <div
-              v-for="(item, idx) in items"
-              :key="item.key"
               class="rounded-xl border p-3 transition"
               :class="
-                item.productId && remainingAfter(item) < 0
+                draftProductId && draftRemaining < 0
                   ? 'border-error-500/40 bg-error-50/40 dark:bg-error-500/5'
                   : 'border-gray-100 dark:border-gray-800'
               "
+              @keydown.enter.prevent="addItem"
             >
-              <div class="grid grid-cols-2 gap-3 md:grid-cols-12 md:items-end">
-                <AppSelect v-model="item.productId" :label="t('common.product')" class="col-span-2 md:col-span-6">
+              <div class="grid grid-cols-2 items-end gap-3 md:grid-cols-12">
+                <AppSelect v-model="draft.productId" :label="t('common.product')" class="col-span-2 md:col-span-5">
                   <option value="">{{ t('common.select') }}</option>
-                  <option v-for="s in availableStock" :key="s.productId" :value="String(s.productId)">
-                    {{ s.productName }} — {{ money(s.quantity) }}
+                  <option
+                    v-for="s in availableStock"
+                    :key="s.productId"
+                    :value="String(s.productId)"
+                    :disabled="availableFor(s.productId) <= 0"
+                  >
+                    {{ s.productName }} — {{ money(availableFor(s.productId)) }}
                   </option>
                 </AppSelect>
                 <AppInput
-                  v-model="item.quantity"
+                  v-model="draft.quantity"
                   :label="t('common.quantity')"
                   type="number"
                   class="md:col-span-2"
                 />
-                <div class="md:col-span-3">
-                  <span class="text-theme-sm font-medium text-gray-700 dark:text-gray-300">{{ t('common.amount') }}</span>
-                  <div class="mt-1.5 flex h-11 items-center rounded-lg bg-gray-50 px-3 text-theme-sm font-semibold text-gray-800 dark:bg-white/5 dark:text-white/90">
-                    <span v-if="item.isBonus" class="text-success-600 dark:text-success-500">{{ t('common.bonus') }}</span>
-                    <span v-else>{{ money(lineSum(item)) }}</span>
-                  </div>
-                </div>
-                <div class="col-span-2 flex items-end justify-end md:col-span-1">
-                  <button
-                    type="button"
-                    class="flex size-11 items-center justify-center rounded-lg text-gray-400 transition hover:bg-error-50 hover:text-error-500 dark:hover:bg-error-500/10"
-                    :title="t('common.delete')"
-                    @click="removeItem(idx)"
-                  >
-                    <AppIcon name="trash" />
-                  </button>
-                </div>
-              </div>
-
-              <div v-if="item.productId" class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-theme-xs">
-                <span class="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-                  <AppIcon name="truck" class="size-4" />
-                  {{ t('orders.onCourier', { qty: money(onCourier(item)), unit: unitLabel(item) }) }}
-                </span>
-                <span
-                  class="inline-flex items-center gap-1.5"
-                  :class="remainingAfter(item) < 0 ? 'font-medium text-error-600 dark:text-error-500' : 'text-gray-500 dark:text-gray-400'"
-                >
-                  <AppIcon :name="remainingAfter(item) < 0 ? 'alert' : 'box'" class="size-4" />
-                  {{
-                    remainingAfter(item) < 0
-                      ? t('orders.notEnough', { qty: money(-remainingAfter(item)), unit: unitLabel(item) })
-                      : t('orders.remainingAfter', { qty: money(remainingAfter(item)), unit: unitLabel(item) })
-                  }}
-                </span>
-                <span class="text-gray-500 dark:text-gray-400">
-                  {{ t('common.price') }}: <b class="font-medium text-gray-700 dark:text-gray-300">{{ money(priceOf(item)) }}</b>
-                </span>
-                <label class="ml-auto inline-flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-1.5 transition"
-                  :class="item.isBonus
+                <label
+                  class="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border text-theme-sm font-medium transition md:col-span-2"
+                  :class="draft.isBonus
                     ? 'border-success-500/40 bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-500'
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5'"
+                    : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5'"
                 >
-                  <input v-model="item.isBonus" type="checkbox" class="sr-only" />
+                  <input v-model="draft.isBonus" type="checkbox" class="sr-only" />
                   <AppIcon name="gift" class="size-4" />
                   {{ t('common.bonus') }}
                 </label>
+                <AppButton type="button" class="col-span-2 h-11 md:col-span-3" :disabled="!canAdd" @click="addItem">
+                  <AppIcon name="plus" class="size-4" />
+                  {{ t('common.add') }}
+                </AppButton>
+              </div>
+
+              <div v-if="draftProductId" class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-theme-xs">
+                <span class="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+                  <AppIcon name="truck" class="size-4" />
+                  {{ t('orders.onCourier', { qty: money(onCourier(draftProductId)), unit: unitLabel(draftProductId) }) }}
+                </span>
+                <span
+                  class="inline-flex items-center gap-1.5"
+                  :class="draftRemaining < 0 ? 'font-medium text-error-600 dark:text-error-500' : 'text-gray-500 dark:text-gray-400'"
+                >
+                  <AppIcon :name="draftRemaining < 0 ? 'alert' : 'box'" class="size-4" />
+                  {{
+                    draftRemaining < 0
+                      ? t('orders.notEnough', { qty: money(-draftRemaining), unit: unitLabel(draftProductId) })
+                      : t('orders.remainingAfter', { qty: money(draftRemaining), unit: unitLabel(draftProductId) })
+                  }}
+                </span>
+                <span class="text-gray-500 dark:text-gray-400">
+                  {{ t('common.price') }}: <b class="font-medium text-gray-700 dark:text-gray-300">{{ money(priceOf(draftProductId)) }}</b>
+                </span>
+                <span class="ml-auto text-gray-500 dark:text-gray-400">
+                  {{ t('common.amount') }}:
+                  <b v-if="draft.isBonus" class="font-semibold text-success-600 dark:text-success-500">{{ t('common.bonus') }}</b>
+                  <b v-else class="font-semibold text-gray-800 dark:text-white/90">{{ money(draftSum) }}</b>
+                </span>
+              </div>
+            </div>
+
+            <div
+              v-if="!items.length"
+              class="rounded-xl border border-dashed border-gray-300 px-4 py-5 text-center text-theme-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
+            >
+              {{ t('orders.noProducts') }}
+            </div>
+            <div v-else class="overflow-hidden rounded-xl border border-gray-100 dark:border-gray-800">
+              <div
+                class="hidden grid-cols-12 gap-3 border-b border-gray-100 bg-gray-50 px-4 py-2.5 text-theme-xs font-medium text-gray-500 md:grid dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400"
+              >
+                <span class="col-span-5">{{ t('common.product') }}</span>
+                <span class="col-span-2 text-right">{{ t('common.quantity') }}</span>
+                <span class="col-span-2 text-right">{{ t('common.price') }}</span>
+                <span class="col-span-2 text-right">{{ t('common.amount') }}</span>
+                <span class="col-span-1" />
+              </div>
+              <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                <div
+                  v-for="item in items"
+                  :key="item.key"
+                  class="grid grid-cols-12 items-center gap-3 px-4 py-3 text-theme-sm"
+                  :class="availableFor(item.productId) < 0 && 'bg-error-50/40 dark:bg-error-500/5'"
+                >
+                  <div class="col-span-7 min-w-0 md:col-span-5">
+                    <div class="flex items-center gap-2">
+                      <span class="truncate font-medium text-gray-800 dark:text-white/90">
+                        {{ stockOf(item.productId)?.productName }}
+                      </span>
+                      <span
+                        v-if="item.isBonus"
+                        class="inline-flex shrink-0 items-center gap-1 rounded-full bg-success-50 px-2 py-0.5 text-theme-xs font-medium text-success-700 dark:bg-success-500/10 dark:text-success-500"
+                      >
+                        <AppIcon name="gift" class="size-3" />
+                        {{ t('common.bonus') }}
+                      </span>
+                    </div>
+                    <p class="mt-0.5 text-theme-xs text-gray-500 md:hidden dark:text-gray-400">
+                      {{ money(item.quantity) }} {{ unitLabel(item.productId) }} × {{ money(priceOf(item.productId)) }}
+                    </p>
+                  </div>
+                  <span class="hidden text-right text-gray-700 md:col-span-2 md:block dark:text-gray-300">
+                    {{ money(item.quantity) }} {{ unitLabel(item.productId) }}
+                  </span>
+                  <span class="hidden text-right text-gray-500 md:col-span-2 md:block dark:text-gray-400">
+                    {{ money(priceOf(item.productId)) }}
+                  </span>
+                  <span class="col-span-3 text-right font-semibold md:col-span-2">
+                    <span v-if="item.isBonus" class="text-success-600 dark:text-success-500">{{ t('common.bonus') }}</span>
+                    <span v-else class="text-gray-800 dark:text-white/90">{{ money(lineSum(item)) }}</span>
+                  </span>
+                  <div class="col-span-2 flex justify-end md:col-span-1">
+                    <button
+                      type="button"
+                      class="flex size-9 items-center justify-center rounded-lg bg-error-500 text-white transition hover:bg-error-600"
+                      :title="t('common.delete')"
+                      @click="removeItem(item.key)"
+                    >
+                      <AppIcon name="trash" class="size-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

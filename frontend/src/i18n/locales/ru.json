@@ -99,6 +99,11 @@
   },
   "auth": {
     "signIn": "Войти",
+    "signInSubtitle": "Введите логин и пароль для входа в систему!",
+    "loginPlaceholder": "Введите логин",
+    "passwordPlaceholder": "Введите пароль",
+    "showPassword": "Показать пароль",
+    "hidePassword": "Скрыть пароль",
     "loginFailed": "Ошибка входа",
     "editProfile": "Редактировать профиль",
     "accountSettings": "Настройки аккаунта"

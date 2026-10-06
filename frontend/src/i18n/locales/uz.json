@@ -99,6 +99,11 @@
   },
   "auth": {
     "signIn": "Kirish",
+    "signInSubtitle": "Tizimga kirish uchun login va parolingizni kiriting!",
+    "loginPlaceholder": "Loginni kiriting",
+    "passwordPlaceholder": "Parolni kiriting",
+    "showPassword": "Parolni ko‘rsatish",
+    "hidePassword": "Parolni yashirish",
     "loginFailed": "Login muvaffaqiyatsiz",
     "editProfile": "Profilni tahrirlash",
     "accountSettings": "Hisob sozlamalari"
