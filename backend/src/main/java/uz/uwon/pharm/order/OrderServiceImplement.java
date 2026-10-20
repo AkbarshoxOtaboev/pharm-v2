@@ -115,7 +115,7 @@ public class OrderServiceImplement implements OrderService {
             // =========================
             OrderItem orderItem;
 
-            if (!itemDTO.getIsBonus()) {
+            if (!Boolean.TRUE.equals(itemDTO.getIsBonus())) {
                 BigDecimal total = quantity.multiply(priceCost);
                 totalSum = totalSum.add(total);
 
@@ -141,11 +141,7 @@ public class OrderServiceImplement implements OrderService {
             // =========================
             // STOCK UPDATE
             // =========================
-            BigDecimal newQty = availableQty.subtract(quantity);
-            BigDecimal newTotalAmount = newQty.multiply(stock.getProductPrice());
-
-            stock.setQuantity(newQty);
-            stock.setTotalAmount(newTotalAmount);
+            changeStock(stock, quantity.negate());
         }
 
         // =========================
@@ -271,12 +267,7 @@ public class OrderServiceImplement implements OrderService {
                         .findByCourierIdAndProductId(order.getUser().getId(), item.getProduct().getId())
                         .orElseThrow(() -> new NotFoundException("stock not found"));
 
-                stock.setQuantity(stock.getQuantity().add(item.getQuantity()));
-                stock.setTotalAmount(
-                        stock.getTotalAmount().add(
-                                item.getQuantity().multiply(item.getProduct().getPrice())
-                        )
-                );
+                changeStock(stock, item.getQuantity());
             }
 
             order.setOrderStatus(newStatus);
@@ -471,196 +462,82 @@ public class OrderServiceImplement implements OrderService {
     @Transactional
     public void update(Long id, OrderDTO dto) {
 
-        // =========================
-        // 🛑 VALIDATION
-        // =========================
         if (dto.getItems() == null || dto.getItems().isEmpty()) {
-            throw new RuntimeException("Order must contain items");
+            throw new IllegalArgumentException("Order must contain items");
         }
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
+        if (!OrderStatus.ACTIVE.contains(order.getOrderStatus())) {
+            throw new IllegalArgumentException("Finished order cannot be edited");
+        }
 
         Long courierId = order.getUser().getId();
 
-        // =========================
-        // 🔑 KEY CLASS
-        // =========================
-        class ItemKey {
-            Long productId;
-            Boolean isBonus;
-
-            public ItemKey(Long productId, Boolean isBonus) {
-                this.productId = productId;
-                this.isBonus = isBonus;
-            }
-
-            public Long getProductId() {
-                return productId;
-            }
-
-            public Boolean getIsBonus() {
-                return isBonus;
-            }
-
-            @Override
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (!(o instanceof ItemKey)) return false;
-                ItemKey key = (ItemKey) o;
-                return Objects.equals(productId, key.productId) &&
-                        Objects.equals(isBonus, key.isBonus);
-            }
-
-            @Override
-            public int hashCode() {
-                return Objects.hash(productId, isBonus);
-            }
+        // Bonus and paid items of one product share the same courier stock row,
+        // so stock is reconciled by the per-product quantity difference.
+        Map<Long, BigDecimal> oldQtyByProduct = new HashMap<>();
+        for (OrderItem item : order.getOrderItems()) {
+            oldQtyByProduct.merge(item.getProduct().getId(), item.getQuantity(), BigDecimal::add);
         }
 
-        // =========================
-        // 📦 PREPARE IDS
-        // =========================
-        List<Long> productIds = dto.getItems()
-                .stream()
-                .map(OrderItemDTO::getProductId)
-                .distinct()
-                .toList();
+        Map<Long, BigDecimal> newQtyByProduct = new HashMap<>();
+        for (OrderItemDTO item : dto.getItems()) {
+            if (item.getProductId() == null || item.getQuantity() == null
+                    || item.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Quantity must be greater than 0");
+            }
+            newQtyByProduct.merge(item.getProductId(), item.getQuantity(), BigDecimal::add);
+        }
 
-        // =========================
-        // 📦 LOAD DATA
-        // =========================
-        Map<Long, Product> productMap = productRepository
-                .findAllById(productIds)
-                .stream()
+        Set<Long> productIds = new HashSet<>(oldQtyByProduct.keySet());
+        productIds.addAll(newQtyByProduct.keySet());
+
+        Map<Long, Product> productMap = productRepository.findAllById(newQtyByProduct.keySet()).stream()
                 .filter(p -> p.getStatus() == Status.ACTIVE)
                 .collect(Collectors.toMap(Product::getId, p -> p));
 
         Map<Long, CourierStock> stockMap = courierStockRepository
-                .findAllByCourierIdAndProductIdIn(courierId, productIds)
+                .findAllByCourierIdAndProductIdIn(courierId, new ArrayList<>(productIds))
                 .stream()
-                .collect(Collectors.toMap(
-                        CourierStock::getId, // ✅ FIX
-                        s -> s,
-                        (a, b) -> a
-                ));
+                .collect(Collectors.toMap(CourierStock::getProductId, s -> s, (a, b) -> a));
 
-        // =========================
-        // 📦 OLD ITEMS MAP
-        // =========================
-        Map<ItemKey, OrderItem> oldItemsMap = order.getOrderItems()
-                .stream()
-                .collect(Collectors.toMap(
-                        i -> new ItemKey(i.getProduct().getId(), i.getIsBonus()),
-                        i -> i,
-                        (a, b) -> a
-                ));
-
-        // =========================
-        // 📦 NEW ITEMS MAP
-        // =========================
-        Map<ItemKey, OrderItemDTO> newItemsMap = dto.getItems()
-                .stream()
-                .collect(Collectors.toMap(
-                        i -> new ItemKey(i.getProductId(), i.getIsBonus()),
-                        i -> i,
-                        (a, b) -> b
-                ));
-
-        // =========================
-        // 🔴 REMOVE ITEMS
-        // =========================
-        for (ItemKey key : oldItemsMap.keySet()) {
-
-            if (!newItemsMap.containsKey(key)) {
-
-                OrderItem oldItem = oldItemsMap.get(key);
-                CourierStock stock = stockMap.get(key.getProductId());
-
-                if (stock == null) {
-                    throw new RuntimeException("Stock not found for product " + key.getProductId());
-                }
-
-                stock.setQuantity(
-                        stock.getQuantity().add(oldItem.getQuantity())
-                );
+        for (Long productId : productIds) {
+            CourierStock stock = stockMap.get(productId);
+            if (stock == null) {
+                throw new NotFoundException("Courier stock not found for product " + productId);
             }
+            BigDecimal diff = newQtyByProduct.getOrDefault(productId, BigDecimal.ZERO)
+                    .subtract(oldQtyByProduct.getOrDefault(productId, BigDecimal.ZERO));
+            if (diff.signum() > 0 && stock.getQuantity().compareTo(diff) < 0) {
+                throw new IllegalArgumentException(
+                        "Mahsulot yetarli emas. Product: " + stock.getProductName()
+                                + ", mavjud: " + stock.getQuantity()
+                                + ", kerak: " + diff);
+            }
+            changeStock(stock, diff.negate());
         }
 
-        // =========================
-        // 🟢 ADD / UPDATE ITEMS
-        // =========================
         BigDecimal totalSum = BigDecimal.ZERO;
         List<OrderItem> updatedItems = new ArrayList<>();
-
-        for (Map.Entry<ItemKey, OrderItemDTO> entry : newItemsMap.entrySet()) {
-
-            ItemKey key = entry.getKey();
-            OrderItemDTO dtoItem = entry.getValue();
-
-            Product product = productMap.get(key.getProductId());
+        for (OrderItemDTO dtoItem : dto.getItems()) {
+            Product product = productMap.get(dtoItem.getProductId());
             if (product == null) {
-                throw new RuntimeException("Product not found: " + key.getProductId());
+                throw new NotFoundException("Product not found: " + dtoItem.getProductId());
             }
-
-            CourierStock stock = stockMap.get(key.getProductId());
-            if (stock == null) {
-                throw new RuntimeException("Stock not found: " + key.getProductId());
-            }
-
-            BigDecimal newQty = dtoItem.getQuantity();
-            OrderItem oldItem = oldItemsMap.get(key);
-
-            if (oldItem == null) {
-                // 🆕 NEW
-
-                if (!dtoItem.getIsBonus()) {
-                    if (stock.getQuantity().compareTo(newQty) < 0) {
-                        throw new RuntimeException("Not enough stock for product " + key.getProductId());
-                    }
-                    stock.setQuantity(stock.getQuantity().subtract(newQty));
-                }
-
-            } else {
-                // 🔄 UPDATE
-
-                BigDecimal oldQty = oldItem.getQuantity();
-                BigDecimal diff = newQty.subtract(oldQty);
-
-                if (!dtoItem.getIsBonus()) {
-
-                    if (diff.compareTo(BigDecimal.ZERO) > 0) {
-                        if (stock.getQuantity().compareTo(diff) < 0) {
-                            throw new RuntimeException("Not enough stock for product " + key.getProductId());
-                        }
-                        stock.setQuantity(stock.getQuantity().subtract(diff));
-
-                    } else if (diff.compareTo(BigDecimal.ZERO) < 0) {
-                        stock.setQuantity(
-                                stock.getQuantity().add(oldQty.subtract(newQty))
-                        );
-                    }
-                }
-            }
-
+            boolean bonus = Boolean.TRUE.equals(dtoItem.getIsBonus());
             BigDecimal price = product.getPriceCost();
-
-            BigDecimal total = dtoItem.getIsBonus()
-                    ? BigDecimal.ZERO
-                    : newQty.multiply(price);
-
+            BigDecimal total = bonus ? BigDecimal.ZERO : dtoItem.getQuantity().multiply(price);
             totalSum = totalSum.add(total);
 
-            OrderItem newItem = OrderItem.builder()
+            updatedItems.add(OrderItem.builder()
                     .product(product)
-                    .quantity(newQty)
+                    .quantity(dtoItem.getQuantity())
                     .price(price)
                     .totalSum(total)
-                    .isBonus(dtoItem.getIsBonus())
+                    .isBonus(bonus)
                     .order(order)
-                    .build();
-
-            updatedItems.add(newItem);
+                    .build());
         }
 
         // =========================
@@ -676,6 +553,14 @@ public class OrderServiceImplement implements OrderService {
         order.setTotalSum(totalSum);
 
         orderRepository.save(order);
+    }
+
+    private void changeStock(CourierStock stock, BigDecimal delta) {
+        BigDecimal quantity = stock.getQuantity().add(delta);
+        stock.setQuantity(quantity);
+        if (stock.getProductPrice() != null) {
+            stock.setTotalAmount(quantity.multiply(stock.getProductPrice()));
+        }
     }
 
     @Override

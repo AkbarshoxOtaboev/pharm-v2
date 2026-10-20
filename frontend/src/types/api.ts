@@ -302,7 +302,11 @@ export interface StoreHistoryResponse {
   id?: number
   productName?: string
   quantity?: number
+  priceCost?: number
+  totalAmount?: number
+  dateOfArrival?: string
   comment?: string
+  status?: Status
   createdAt?: string
   [key: string]: unknown
 }
@@ -311,10 +315,13 @@ export interface CourierStockResponse {
   id: number
   productId: number
   productName?: string
+  /** Free quantity on the courier, already excluding items held by active orders. */
   quantity?: number
   productPrice?: number
   totalAmount?: number
   unitType?: UnitType
+  inOrders?: number
+  inOrdersCount?: number
 }
 
 export interface CourierStockDTO {
@@ -328,29 +335,63 @@ export interface ReturnDTO {
   quantity: number
 }
 
+export type StockActionType = 'INCOME' | 'OUTCOME' | 'SALE' | 'RETURN'
+
 export interface CourierStockHistoryResponse {
   id?: number
+  courierId?: number
+  courierName?: string
   productName?: string
-  quantity?: number
+  beforeQuantity?: number
+  changeQuantity?: number
+  afterQuantity?: number
+  productPrice?: number
+  totalAmount?: number
+  unitType?: UnitType
+  actionType?: StockActionType
+  comment?: string
   createdAt?: string
   [key: string]: unknown
 }
 
+export type CashRegisterStatus = 'ON_COURIER' | 'ON_ADMIN'
+
 export interface CashRegisterResponse {
   id: number
+  courierId?: number
   courierName?: string
   orderId?: number
   orderTotalSum?: number
-  registerStatus?: string
+  registerStatus?: CashRegisterStatus
   createdAt?: string
   dateTime?: string
   comment?: string
+}
+
+export interface CourierCashRow {
+  courierId: number
+  courierName?: string
+  onCourierSum: number
+  onCourierCount: number
+  oldestOnCourierAt?: string
+  handedSum: number
+  handedCount: number
+  lastHandedAt?: string
+}
+
+export interface CashSummaryResponse {
+  onCourierSum: number
+  onCourierCount: number
+  handedSum: number
+  handedCount: number
+  couriers: CourierCashRow[]
 }
 
 export interface DailyCashDTO {
   date?: string
   total?: number
   totalSum?: number
+  ordersCount?: number
   [key: string]: unknown
 }
 

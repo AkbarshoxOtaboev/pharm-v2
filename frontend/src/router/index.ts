@@ -76,9 +76,19 @@ const router = createRouter({
           component: () => import('@/pages/admin/StorePage.vue'),
         },
         {
+          path: 'store-history',
+          name: 'admin-store-history',
+          component: () => import('@/pages/admin/StoreHistoryPage.vue'),
+        },
+        {
           path: 'courier-stock',
           name: 'admin-courier-stock',
           component: () => import('@/pages/admin/CourierStockPage.vue'),
+        },
+        {
+          path: 'courier-transfers',
+          name: 'admin-courier-transfers',
+          component: () => import('@/pages/admin/CourierTransfersPage.vue'),
         },
         {
           path: 'cash-register',

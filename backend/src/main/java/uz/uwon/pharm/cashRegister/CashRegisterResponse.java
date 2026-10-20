@@ -19,4 +19,5 @@ public class CashRegisterResponse {
     private LocalDateTime createdAt;
     private LocalDateTime dateTime;
     private String comment;
+    private Long courierId;
 }

@@ -14,7 +14,9 @@ defineEmits<{ close: [] }>()
         class="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-md dark:border-gray-800 dark:bg-gray-dark"
       >
         <div class="mb-4 flex items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ title }}</h2>
+          <h2 class="flex items-center gap-2.5 text-lg font-semibold text-gray-800 dark:text-white/90">
+            <slot name="title">{{ title }}</slot>
+          </h2>
           <button
             class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
             type="button"

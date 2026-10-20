@@ -59,6 +59,17 @@ defineProps<{ name: string; active?: boolean }>()
       <circle cx="7" cy="17.5" r="1.5" />
       <circle cx="17.5" cy="17.5" r="1.5" />
     </g>
+    <!-- store arrivals history -->
+    <g v-else-if="name === 'arrivals'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 10.5L5 4H19L21 10.5" />
+      <path d="M3 10.5H21V20H3V10.5Z" />
+      <path d="M12 12.5V17.5M9.5 15L12 17.5L14.5 15" />
+    </g>
+    <!-- courier transfers history -->
+    <g v-else-if="name === 'transfers'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 8H18M14 4L18 8L14 12" />
+      <path d="M20 16H6M10 12L6 16L10 20" />
+    </g>
     <!-- cash -->
     <g v-else-if="name === 'cash'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2.5" y="6" width="19" height="12" rx="2" />

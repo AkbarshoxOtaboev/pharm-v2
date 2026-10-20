@@ -2,8 +2,11 @@ package uz.uwon.pharm.storeHistory;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uz.uwon.pharm.common.PageRequests;
 import uz.uwon.pharm.utils.Status;
 
 import java.time.LocalDate;
@@ -36,6 +39,16 @@ public class StoreHistoryServiceImplement implements StoreHistoryService {
                     .collect(Collectors.toList());
         }
         return findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<StoreHistoryResponse> getPage(LocalDate startDate, LocalDate endDate, int page, int size) {
+        LocalDate start = startDate != null ? startDate : LocalDate.of(1970, 1, 1);
+        LocalDate end = endDate != null ? endDate : LocalDate.of(9999, 12, 31);
+        Sort sort = Sort.by(Sort.Direction.DESC, "dateOfArrival").and(Sort.by(Sort.Direction.DESC, "id"));
+        return repository.findAllByStatusAndDateOfArrivalBetween(Status.ACTIVE, start, end, PageRequests.of(page, size, sort))
+                .map(this::mapToStoreHistoryResponse);
     }
 
     private StoreHistoryResponse mapToStoreHistoryResponse(StoreHistory history){

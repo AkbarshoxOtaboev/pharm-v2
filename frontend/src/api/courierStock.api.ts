@@ -6,6 +6,7 @@ import type {
   CourierStockResponse,
   ProductResponse,
   ReturnDTO,
+  StockActionType,
 } from '@/types/api'
 
 export async function transferStock(dto: CourierStockDTO) {
@@ -31,6 +32,21 @@ export async function fetchCourierStockHistory(
 ) {
   const { data } = await api.get<ApiResponse<CourierStockHistoryResponse[]>>(
     `/courier-stock/${courierId}/history`,
+    { params },
+  )
+  return data
+}
+
+export async function fetchCourierTransfers(params: {
+  courierId?: number
+  action?: StockActionType
+  from?: string
+  to?: string
+  page: number
+  size: number
+}) {
+  const { data } = await api.get<ApiResponse<CourierStockHistoryResponse[]>>(
+    '/courier-stock/history',
     { params },
   )
   return data

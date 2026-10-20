@@ -19,11 +19,13 @@
     "products": "Маҳсулотлар",
     "store": "Омбор",
     "courierStock": "Курьер захираси",
-    "cash": "Кунлик ҳисоботлар",
+    "cash": "Касса",
     "courierReports": "Курьер ҳисоботлари",
     "createOrder": "Буюртма яратиш",
     "saleLogs": "Сотув логлари",
-    "profile": "Профил"
+    "profile": "Профил",
+    "storeHistory": "Киримлар тарихи",
+    "courierTransfers": "Трансферлар тарихи"
   },
   "common": {
     "save": "Сақлаш",
@@ -85,7 +87,8 @@
     "confirmDeleteAddress": "Манзил ўчирилсинми?",
     "confirmReturnCash": "#{id} нақд пулни қайтарилсинми?",
     "empty": "—",
-    "photo": "Расм"
+    "photo": "Расм",
+    "currency": "сўм"
   },
   "theme": {
     "light": "Ёруғ режим",
@@ -196,7 +199,16 @@
     "bonus": "Бонус",
     "sales": "Сотув",
     "monthlySales": "Ойлик сотувлар",
-    "monthlySalesHint": "{year}-йил етказилган буюртмалар суммаси"
+    "monthlySalesHint": "{year}-йил етказилган буюртмалар суммаси",
+    "dailyOrdersChart": "Кунлик буюртмалар",
+    "dailySumsChart": "Кунлик суммалар",
+    "currentMonthHint": "{month} {year} — ҳар кунлик кўрсаткичлар",
+    "cardSettings": "Кўриниш",
+    "cardSettingsHint": "Дашбордда кўринадиган карточка ва диаграммаларни танланг. Танлов сақланиб қолади.",
+    "settingsCards": "Карточкалар",
+    "settingsCharts": "Диаграммалар",
+    "showAllCards": "Ҳаммасини кўрсатиш",
+    "noCards": "Ҳеч қандай карточка танланмаган."
   },
   "orders": {
     "title": "Буюртмалар",
@@ -291,7 +303,17 @@
     "notFound": "Маҳсулотлар топилмади",
     "editTitle": "Маҳсулотни таҳрирлаш",
     "createTitle": "Янги маҳсулот",
-    "sortNumber": "Тартиб рақами"
+    "sortNumber": "Тартиб рақами",
+    "addProduct": "Янги маҳсулот",
+    "formHint": "* белгили майдонлар мажбурий",
+    "sectionMain": "Асосий маълумотлар",
+    "sectionPrice": "Нархлар",
+    "sectionExtra": "Қўшимча",
+    "namePlaceholder": "Масалан: Парацетамол 500 мг",
+    "descriptionPlaceholder": "Маҳсулот ҳақида қисқача...",
+    "uploadPhoto": "Расм юклаш",
+    "changePhoto": "Расмни алмаштириш",
+    "photoHint": "PNG, JPG ёки WEBP"
   },
   "store": {
     "title": "Омбор",
@@ -310,7 +332,7 @@
   },
   "courierStock": {
     "title": "Курьер захира",
-    "subtitle": "Трансфер, қайтариш ва тарих",
+    "subtitle": "Курьерлардаги жорий захира",
     "transferFromStore": "Омбордан трансфер",
     "returnToStore": "Омборга қайтариш",
     "productFromStock": "Маҳсулот (захирадан)",
@@ -326,18 +348,40 @@
     "after": "Кейин",
     "storeQty": "омбор: {qty}",
     "transferOk": "Трансфер муваффақиятли",
-    "returnOk": "Қайтариш муваффақиятли"
+    "returnOk": "Қайтариш муваффақиятли",
+    "giveToCourier": "Курьерга бериш",
+    "give": "Бериш",
+    "productTypes": "Маҳсулот турлари",
+    "productTypesHint": "Курьерда ва буюртмаларда бор турлар",
+    "productCount": "Маҳсулотлар сони",
+    "totalSum": "Умумий сумма",
+    "splitHint": "Курьерда {free} · буюртмада {orders}",
+    "inOrders": "Буюртмада",
+    "inOrdersTitle": "{count} та фаол буюртмада (етказилгач камаяди)",
+    "ordersShort": "{count} та буюртма",
+    "inStore": "Омборда",
+    "onCourier": "Курьерда",
+    "afterTransfer": "Кейин: омборда {store}, курьерда {courier}",
+    "afterReturn": "Қайтарилгандан кейин курьерда {qty} қолади",
+    "returnAll": "Ҳаммасини қайтариш"
   },
   "cash": {
-    "title": "Кунлик ҳисоботлар",
-    "subtitle": "Курьер кассаси ва кунлик ҳисобот",
-    "totalOnCourier": "Курьердаги жами",
-    "entriesCount": "Ёзувлар сони",
-    "entries": "Касса ёзувлари",
-    "empty": "Ёзувлар йўқ",
-    "dailyReport": "Кунлик ҳисобот",
-    "reportEmpty": "Ҳисобот бўш",
-    "return": "Қайтариш"
+    "title": "Касса",
+    "subtitle": "Топширилган пуллар, курьерлардаги пуллар ва кунлик қабул",
+    "onCouriers": "Курьерлардаги пул",
+    "onCourier": "Курьердаги пул",
+    "handedInPeriod": "Топширилган (даврда)",
+    "ordersHint": "{count} та буюртма",
+    "debtors": "Пули бор курьерлар",
+    "debtorsHint": "Жами курьерлар: {total}",
+    "dailyReport": "Кунлик қабул қилинган пуллар",
+    "dailyHint": "Танланган даврда ҳар куни кассага қабул қилинган пуллар (барча курьерлар)",
+    "reportEmpty": "Танланган даврда пул қабул қилинмаган",
+    "ordersCount": "Буюртмалар сони",
+    "receivedSum": "Қабул қилинган сумма",
+    "exportExcel": "Excel юклаш",
+    "excelTitle": "Касса — кунлик қабул қилинган пуллар",
+    "excelPeriod": "Давр: {period}"
   },
   "courierReports": {
     "title": "Курьер ҳисоботлари",
@@ -353,7 +397,11 @@
     "orders": "Курьер буюртмалари",
     "empty": "Буюртмалар топилмади",
     "selectCourier": "Ҳисоботни кўриш учун курьерни танланг",
-    "deliveredOnly": "Суммалар фақат етказилган буюртмалар бўйича"
+    "deliveredOnly": "Суммалар фақат етказилган буюртмалар бўйича",
+    "cashSection": "Курьер кассаси",
+    "onCourierHint": "{count} та буюртма · энг эскиси {date}",
+    "noDebt": "Курьерда топширилмаган пул йўқ",
+    "handedHint": "{count} та буюртма · охиргиси {date}"
   },
   "saleLogs": {
     "title": "Сотув логлари",
@@ -433,6 +481,7 @@
     "loadDailyReport": "Кунлик ҳисоботни юклаб бўлмади",
     "loadCourierReport": "Курьер ҳисоботини юклаб бўлмади",
     "returnCashFailed": "Қайтариб бўлмади",
+    "exportFailed": "Файлни юклаб бўлмади",
     "loadSaleLogs": "Сотув логларини юклаб бўлмади",
     "enterPasswords": "Жорий ва янги паролни киритинг",
     "passwordMismatch": "Янги пароллар мос келмади",
@@ -458,6 +507,21 @@
       "UNSUPPORTED_MEDIA_TYPE": "Маълумот тури қўлланмайди",
       "FILE_TOO_LARGE": "Файл ҳажми жуда катта",
       "INTERNAL_ERROR": "Сервер хатоси"
+    }
+  },
+  "storeHistory": {
+    "title": "Киримлар тарихи",
+    "subtitle": "Омборга келган маҳсулотлар тарихи",
+    "pageQty": "Саҳифадаги миқдор",
+    "pageSum": "Саҳифадаги сумма"
+  },
+  "courierTransfers": {
+    "title": "Трансферлар тарихи",
+    "subtitle": "Омбор ва курьерлар ўртасидаги трансферлар",
+    "allCouriers": "Барча курьерлар",
+    "action": {
+      "INCOME": "Курьерга берилди",
+      "RETURN": "Омборга қайтарилди"
     }
   }
 }

@@ -2,37 +2,24 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { enumLabel } from '@/i18n'
-import {
-  addStoreArrival,
-  fetchStore,
-  fetchStoreHistory,
-  fetchStoreStatistics,
-} from '@/api/store.api'
+import { addStoreArrival, fetchStore, fetchStoreStatistics } from '@/api/store.api'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppTextarea from '@/components/ui/AppTextarea.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import StatCard from '@/components/ui/StatCard.vue'
-import type {
-  StoreHistoryResponse,
-  StoreResponse,
-  StoreStatisticsResponse,
-} from '@/types/api'
+import type { StoreResponse, StoreStatisticsResponse } from '@/types/api'
 import { apiError, money, statusTone } from '@/utils/format'
 
 const { t } = useI18n()
 const items = ref<StoreResponse[]>([])
-const history = ref<StoreHistoryResponse[]>([])
 const stats = ref<StoreStatisticsResponse | null>(null)
 const loading = ref(false)
-const histLoading = ref(false)
 const error = ref('')
-
-const histFrom = ref('')
-const histTo = ref('')
 
 const arrivalOpen = ref(false)
 const arrivalSaving = ref(false)
@@ -61,21 +48,6 @@ async function loadStore() {
   }
 }
 
-async function loadHistory() {
-  histLoading.value = true
-  try {
-    const res = await fetchStoreHistory({
-      from: histFrom.value || undefined,
-      to: histTo.value || undefined,
-    })
-    history.value = res.data || []
-  } catch (e) {
-    error.value = apiError(e, 'errors.loadHistory')
-  } finally {
-    histLoading.value = false
-  }
-}
-
 function openArrival(row: StoreResponse) {
   selected.value = row
   arrivalForm.quantity = ''
@@ -100,7 +72,7 @@ async function saveArrival() {
       comment: arrivalForm.comment.trim() || undefined,
     })
     arrivalOpen.value = false
-    await Promise.all([loadStore(), loadHistory()])
+    await loadStore()
   } catch (e) {
     arrivalError.value = apiError(e, 'errors.addArrivalFailed')
   } finally {
@@ -108,15 +80,22 @@ async function saveArrival() {
   }
 }
 
-onMounted(async () => {
-  await loadStore()
-  await loadHistory()
-})
+onMounted(loadStore)
 </script>
 
 <template>
   <div>
-    <PageHeader :title="t('store.title')" :subtitle="t('store.subtitle')" />
+    <PageHeader :title="t('store.title')" :subtitle="t('store.subtitle')">
+      <template #actions>
+        <RouterLink
+          to="/admin/store-history"
+          class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
+        >
+          <AppIcon name="history" class="size-4.5" />
+          {{ t('nav.storeHistory') }}
+        </RouterLink>
+      </template>
+    </PageHeader>
 
     <div
       v-if="error"
@@ -160,39 +139,6 @@ onMounted(async () => {
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <AppButton size="sm" @click="openArrival(row)">{{ t('store.arrival') }}</AppButton>
         </td>
-      </tr>
-    </DataTable>
-
-    <div class="mt-8 mb-3 flex flex-wrap items-end justify-between gap-3">
-      <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ t('store.history') }}</h2>
-      <div class="flex flex-wrap items-end gap-2">
-        <AppInput v-model="histFrom" :label="t('common.from')" type="date" />
-        <AppInput v-model="histTo" :label="t('common.to')" type="date" />
-        <AppButton @click="loadHistory">{{ t('common.filter') }}</AppButton>
-      </div>
-    </div>
-
-    <DataTable
-      :loading="histLoading"
-      :empty="!histLoading && !history.length ? t('store.historyEmpty') : undefined"
-    >
-      <template #head>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.product') }}</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.quantity') }}</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.cost') }}</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.amount') }}</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.date') }}</th>
-        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.comment') }}</th>
-      </template>
-      <tr v-for="h in history" :key="h.id">
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ h.productName || t('common.empty') }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ h.quantity ?? 0 }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(h.priceCost as number) }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(h.totalAmount as number) }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
-          {{ (h.dateOfArrival as string) || h.createdAt || t('common.empty') }}
-        </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ h.comment || t('common.empty') }}</td>
       </tr>
     </DataTable>
 

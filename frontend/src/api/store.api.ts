@@ -24,6 +24,18 @@ export async function fetchStoreHistory(params?: { from?: string; to?: string })
   return data
 }
 
+export async function fetchStoreHistoryPage(params: {
+  from?: string
+  to?: string
+  page: number
+  size: number
+}) {
+  const { data } = await api.get<ApiResponse<StoreHistoryResponse[]>>('/store/history/page', {
+    params,
+  })
+  return data
+}
+
 export async function fetchStoreStatistics() {
   const { data } = await api.get<ApiResponse<StoreStatisticsResponse>>('/store/statistics')
   return data

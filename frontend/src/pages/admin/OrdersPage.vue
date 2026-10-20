@@ -19,7 +19,7 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import type { OrderDetailResponse, OrderResponse, OrderStatus, UserResponse } from '@/types/api'
-import { apiError, money, statusSelectClass } from '@/utils/format'
+import { apiError, fileUrl, money, statusSelectClass } from '@/utils/format'
 
 const ORDER_STATUSES: OrderStatus[] = [
   'NEW',
@@ -85,12 +85,6 @@ const comments = ref<OrderDeliveredInfoResponse[]>([])
 const commentsOrderId = ref<number | null>(null)
 
 let filterTimer: ReturnType<typeof setTimeout> | null = null
-
-function fileUrl(name?: string | null) {
-  if (!name || name === 'no_image.png') return ''
-  if (name.startsWith('http') || name.startsWith('/')) return name
-  return `/api/v1/files/${name}`
-}
 
 async function load() {
   loading.value = true

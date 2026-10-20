@@ -47,7 +47,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/store/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/statistics/courier/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/courier-stock/transfer", "/api/v1/courier-stock/return")
+                        .requestMatchers("/api/v1/courier-stock/transfer", "/api/v1/courier-stock/return",
+                                "/api/v1/courier-stock/history",
+                                "/api/v1/cash-register/summary", "/api/v1/cash-register/page",
+                                "/api/v1/cash-register/daily-report/page",
+                                "/api/v1/cash-register/courier/*/return-all")
                             .hasRole("ADMIN")
                         .requestMatchers("/api/v1/courier/**").hasRole("COURIER")
                         .requestMatchers("/api/v1/**").hasAnyRole("ADMIN", "OPERATOR", "COURIER", "VIEWER")

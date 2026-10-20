@@ -25,6 +25,12 @@ export function isoDate(d: Date) {
   return `${d.getFullYear()}-${month}-${day}`
 }
 
+export function fileUrl(name?: string | null) {
+  if (!name || name === 'no_image.png') return ''
+  if (name.startsWith('http') || name.startsWith('/')) return name
+  return `/api/v1/files/${name}`
+}
+
 export function apiError(e: unknown, fallback = 'errors.generic') {
   const { t, te } = i18n.global
   const err = e as {

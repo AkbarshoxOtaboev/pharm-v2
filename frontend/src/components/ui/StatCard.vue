@@ -5,7 +5,7 @@ withDefaults(
     value: string | number
     hint?: string
     tone?: 'brand' | 'success' | 'warning' | 'error' | 'purple' | 'cyan'
-    icon?: 'users' | 'orders' | 'delivered' | 'cancelled' | 'daily' | 'monthly'
+    icon?: 'users' | 'orders' | 'delivered' | 'cancelled' | 'daily' | 'monthly' | 'layers' | 'cash' | 'wallet' | 'truck'
   }>(),
   { tone: 'brand', icon: 'orders' },
 )
@@ -63,6 +63,25 @@ const toneClass: Record<string, string> = {
           <template v-else-if="icon === 'cancelled'">
             <circle cx="12" cy="12" r="9" />
             <path d="M15 9L9 15M9 9L15 15" />
+          </template>
+          <template v-else-if="icon === 'layers'">
+            <path d="M12 3L21 8L12 13L3 8L12 3Z" />
+            <path d="M3 12.5L12 17.5L21 12.5M3 16.5L12 21.5L21 16.5" />
+          </template>
+          <template v-else-if="icon === 'cash'">
+            <rect x="2.5" y="6" width="19" height="12" rx="2" />
+            <circle cx="12" cy="12" r="2.5" />
+            <path d="M6 10V14M18 10V14" />
+          </template>
+          <template v-else-if="icon === 'wallet'">
+            <path d="M19 7V5C19 3.9 18.1 3 17 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V9C21 7.9 20.1 7 19 7H5" />
+            <circle cx="16.5" cy="14" r="1.5" />
+          </template>
+          <template v-else-if="icon === 'truck'">
+            <path d="M3 7H14V16H3V7Z" />
+            <path d="M14 10H18L21 13V16H14V10Z" />
+            <circle cx="7" cy="17.5" r="1.5" />
+            <circle cx="17.5" cy="17.5" r="1.5" />
           </template>
           <template v-else-if="icon === 'daily'">
             <rect x="3" y="5" width="18" height="16" rx="2" />

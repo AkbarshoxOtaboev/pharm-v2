@@ -19,11 +19,13 @@
     "products": "Mahsulotlar",
     "store": "Ombor",
     "courierStock": "Kuryer zaxirasi",
-    "cash": "Kunlik hisobotlar",
+    "cash": "Kassa",
     "courierReports": "Kuryer hisobotlari",
     "createOrder": "Buyurtma yaratish",
     "saleLogs": "Sotuv loglari",
-    "profile": "Profil"
+    "profile": "Profil",
+    "storeHistory": "Kirimlar tarixi",
+    "courierTransfers": "Transferlar tarixi"
   },
   "common": {
     "save": "Saqlash",
@@ -85,7 +87,8 @@
     "confirmDeleteAddress": "Manzil o‘chirilsinmi?",
     "confirmReturnCash": "#{id} naqd pulni qaytarilsinmi?",
     "empty": "—",
-    "photo": "Rasm"
+    "photo": "Rasm",
+    "currency": "so‘m"
   },
   "theme": {
     "light": "Yorug‘ rejim",
@@ -196,7 +199,16 @@
     "bonus": "Bonus",
     "sales": "Sotuv",
     "monthlySales": "Oylik sotuvlar",
-    "monthlySalesHint": "{year}-yil yetkazilgan buyurtmalar summasi"
+    "monthlySalesHint": "{year}-yil yetkazilgan buyurtmalar summasi",
+    "dailyOrdersChart": "Kunlik buyurtmalar",
+    "dailySumsChart": "Kunlik summalar",
+    "currentMonthHint": "{month} {year} — har kunlik ko‘rsatkichlar",
+    "cardSettings": "Ko‘rinish",
+    "cardSettingsHint": "Dashboardda ko‘rinadigan kartochka va diagrammalarni tanlang. Tanlov saqlanib qoladi.",
+    "settingsCards": "Kartochkalar",
+    "settingsCharts": "Diagrammalar",
+    "showAllCards": "Hammasini ko‘rsatish",
+    "noCards": "Hech qanday kartochka tanlanmagan."
   },
   "orders": {
     "title": "Buyurtmalar",
@@ -291,7 +303,17 @@
     "notFound": "Mahsulotlar topilmadi",
     "editTitle": "Mahsulotni tahrirlash",
     "createTitle": "Yangi mahsulot",
-    "sortNumber": "Tartib raqami"
+    "sortNumber": "Tartib raqami",
+    "addProduct": "Yangi mahsulot",
+    "formHint": "* belgili maydonlar majburiy",
+    "sectionMain": "Asosiy maʼlumotlar",
+    "sectionPrice": "Narxlar",
+    "sectionExtra": "Qo‘shimcha",
+    "namePlaceholder": "Masalan: Paracetamol 500 mg",
+    "descriptionPlaceholder": "Mahsulot haqida qisqacha...",
+    "uploadPhoto": "Rasm yuklash",
+    "changePhoto": "Rasmni almashtirish",
+    "photoHint": "PNG, JPG yoki WEBP"
   },
   "store": {
     "title": "Ombor",
@@ -310,7 +332,7 @@
   },
   "courierStock": {
     "title": "Kuryer zaxira",
-    "subtitle": "Transfer, qaytarish va tarix",
+    "subtitle": "Kuryerlardagi joriy zaxira",
     "transferFromStore": "Ombordan transfer",
     "returnToStore": "Omborga qaytarish",
     "productFromStock": "Mahsulot (zaxiradan)",
@@ -326,18 +348,40 @@
     "after": "Keyin",
     "storeQty": "ombor: {qty}",
     "transferOk": "Transfer muvaffaqiyatli",
-    "returnOk": "Qaytarish muvaffaqiyatli"
+    "returnOk": "Qaytarish muvaffaqiyatli",
+    "giveToCourier": "Kuryerga berish",
+    "give": "Berish",
+    "productTypes": "Mahsulot turlari",
+    "productTypesHint": "Kuryerda va buyurtmalarda bor turlar",
+    "productCount": "Mahsulotlar soni",
+    "totalSum": "Umumiy summa",
+    "splitHint": "Kuryerda {free} · buyurtmada {orders}",
+    "inOrders": "Buyurtmada",
+    "inOrdersTitle": "{count} ta faol buyurtmada (yetkazilgach kamayadi)",
+    "ordersShort": "{count} ta buyurtma",
+    "inStore": "Omborda",
+    "onCourier": "Kuryerda",
+    "afterTransfer": "Keyin: omborda {store}, kuryerda {courier}",
+    "afterReturn": "Qaytarilgandan keyin kuryerda {qty} qoladi",
+    "returnAll": "Hammasini qaytarish"
   },
   "cash": {
-    "title": "Kunlik hisobotlar",
-    "subtitle": "Kuryer kassasi va kunlik hisobot",
-    "totalOnCourier": "Kuryerdagi jami",
-    "entriesCount": "Yozuvlar soni",
-    "entries": "Kassa yozuvlari",
-    "empty": "Yozuvlar yo‘q",
-    "dailyReport": "Kunlik hisobot",
-    "reportEmpty": "Hisobot bo‘sh",
-    "return": "Qaytarish"
+    "title": "Kassa",
+    "subtitle": "Topshirilgan pullar, kuryerlardagi pullar va kunlik qabul",
+    "onCouriers": "Kuryerlardagi pul",
+    "onCourier": "Kuryerdagi pul",
+    "handedInPeriod": "Topshirilgan (davrda)",
+    "ordersHint": "{count} ta buyurtma",
+    "debtors": "Puli bor kuryerlar",
+    "debtorsHint": "Jami kuryerlar: {total}",
+    "dailyReport": "Kunlik qabul qilingan pullar",
+    "dailyHint": "Tanlangan davrda har kuni kassaga qabul qilingan pullar (barcha kuryerlar)",
+    "reportEmpty": "Tanlangan davrda pul qabul qilinmagan",
+    "ordersCount": "Buyurtmalar soni",
+    "receivedSum": "Qabul qilingan summa",
+    "exportExcel": "Excel yuklash",
+    "excelTitle": "Kassa — kunlik qabul qilingan pullar",
+    "excelPeriod": "Davr: {period}"
   },
   "courierReports": {
     "title": "Kuryer hisobotlari",
@@ -353,7 +397,11 @@
     "orders": "Kuryer buyurtmalari",
     "empty": "Buyurtmalar topilmadi",
     "selectCourier": "Hisobotni ko‘rish uchun kuryerni tanlang",
-    "deliveredOnly": "Summalar faqat yetkazilgan buyurtmalar bo‘yicha"
+    "deliveredOnly": "Summalar faqat yetkazilgan buyurtmalar bo‘yicha",
+    "cashSection": "Kuryer kassasi",
+    "onCourierHint": "{count} ta buyurtma · eng eskisi {date}",
+    "noDebt": "Kuryerda topshirilmagan pul yo‘q",
+    "handedHint": "{count} ta buyurtma · oxirgisi {date}"
   },
   "saleLogs": {
     "title": "Sotuv loglari",
@@ -433,6 +481,7 @@
     "loadDailyReport": "Kunlik hisobotni yuklab bo‘lmadi",
     "loadCourierReport": "Kuryer hisobotini yuklab bo‘lmadi",
     "returnCashFailed": "Qaytarib bo‘lmadi",
+    "exportFailed": "Faylni yuklab bo‘lmadi",
     "loadSaleLogs": "Sotuv loglarini yuklab bo‘lmadi",
     "enterPasswords": "Joriy va yangi parolni kiriting",
     "passwordMismatch": "Yangi parollar mos kelmadi",
@@ -458,6 +507,21 @@
       "UNSUPPORTED_MEDIA_TYPE": "Maʼlumot turi qo‘llanmaydi",
       "FILE_TOO_LARGE": "Fayl hajmi juda katta",
       "INTERNAL_ERROR": "Server xatosi"
+    }
+  },
+  "storeHistory": {
+    "title": "Kirimlar tarixi",
+    "subtitle": "Omborga kelgan mahsulotlar tarixi",
+    "pageQty": "Sahifadagi miqdor",
+    "pageSum": "Sahifadagi summa"
+  },
+  "courierTransfers": {
+    "title": "Transferlar tarixi",
+    "subtitle": "Ombor va kuryerlar o‘rtasidagi transferlar",
+    "allCouriers": "Barcha kuryerlar",
+    "action": {
+      "INCOME": "Kuryerga berildi",
+      "RETURN": "Omborga qaytarildi"
     }
   }
 }

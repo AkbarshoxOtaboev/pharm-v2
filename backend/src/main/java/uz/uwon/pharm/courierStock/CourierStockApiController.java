@@ -4,8 +4,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
 import uz.uwon.pharm.common.ApiResponse;
+import uz.uwon.pharm.common.PageMeta;
 import uz.uwon.pharm.courierStockHistory.CourierStockHistoryResponse;
+import uz.uwon.pharm.courierStockHistory.StockActionType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -35,6 +38,19 @@ public class CourierStockApiController {
             @RequestParam Long courierId,
             @RequestParam String q) {
         return ApiResponse.ok(courierStockService.productSearch(courierId, q));
+    }
+
+    @GetMapping("/history")
+    public ApiResponse<List<CourierStockHistoryResponse>> historyPage(
+            @RequestParam(required = false) Long courierId,
+            @RequestParam(required = false) StockActionType action,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        Page<CourierStockHistoryResponse> result =
+                courierStockService.historyPage(courierId, action, from, to, page, size);
+        return ApiResponse.ok(result.getContent(), PageMeta.from(result));
     }
 
     @GetMapping("/{courierId}")

@@ -1,25 +1,39 @@
 package uz.uwon.pharm.courierStock;
 
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uz.uwon.pharm.common.PageRequests;
 import uz.uwon.pharm.courierStockHistory.CourierStockHistory;
 import uz.uwon.pharm.courierStockHistory.CourierStockHistoryRepository;
 import uz.uwon.pharm.courierStockHistory.CourierStockHistoryResponse;
 import uz.uwon.pharm.courierStockHistory.StockActionType;
 import uz.uwon.pharm.exceptions.NotFoundException;
+import uz.uwon.pharm.order.OrderStatus;
+import uz.uwon.pharm.orderitem.OrderItemRepository;
 import uz.uwon.pharm.product.Product;
 import uz.uwon.pharm.product.ProductRepository;
 import uz.uwon.pharm.store.Store;
 import uz.uwon.pharm.store.StoreRepository;
+import uz.uwon.pharm.users.User;
+import uz.uwon.pharm.users.UserRepository;
 import uz.uwon.pharm.utils.Status;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +44,8 @@ public class CourierStockServiceImplement implements CourierStockService{
     private final StoreRepository storeRepository;
     private final ProductRepository productRepository;
     private final CourierStockHistoryRepository historyRepository;
+    private final UserRepository userRepository;
+    private final OrderItemRepository orderItemRepository;
 
     @Override
     public void save(CourierStockDTO dto) {
@@ -95,8 +111,24 @@ public class CourierStockServiceImplement implements CourierStockService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CourierStockResponse> courierStocks(Long courierId) {
-        return repository.findCourierStockByCourierIdOrderByIdAsc(courierId).stream().map(this::mapToResponse).toList();
+        Map<Long, OrderItemRepository.ReservedStockView> reserved = orderItemRepository
+                .reservedByCourier(courierId, OrderStatus.ACTIVE)
+                .stream()
+                .collect(Collectors.toMap(OrderItemRepository.ReservedStockView::getProductId, v -> v, (a, b) -> a));
+
+        return repository.findCourierStockByCourierIdOrderByIdAsc(courierId).stream()
+                .map(stock -> {
+                    CourierStockResponse response = mapToResponse(stock);
+                    OrderItemRepository.ReservedStockView r = reserved.get(stock.getProductId());
+                    if (r != null) {
+                        response.setInOrders(r.getQuantity());
+                        response.setInOrdersCount(r.getOrdersCount());
+                    }
+                    return response;
+                })
+                .toList();
     }
 
     @Override
@@ -161,6 +193,33 @@ public class CourierStockServiceImplement implements CourierStockService{
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CourierStockHistoryResponse> historyPage(Long courierId, StockActionType actionType,
+                                                         LocalDate startDate, LocalDate endDate,
+                                                         int page, int size) {
+        Specification<CourierStockHistory> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (courierId != null) predicates.add(cb.equal(root.get("courierId"), courierId));
+            if (actionType != null) predicates.add(cb.equal(root.get("actionType"), actionType));
+            if (startDate != null) predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate.atStartOfDay()));
+            if (endDate != null) predicates.add(cb.lessThan(root.get("createdAt"), endDate.plusDays(1).atStartOfDay()));
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
+        Page<CourierStockHistoryResponse> result = historyRepository
+                .findAll(spec, PageRequests.of(page, size, Sort.by(Sort.Direction.DESC, "id")))
+                .map(this::toResponse);
+
+        Set<Long> courierIds = result.stream()
+                .map(CourierStockHistoryResponse::getCourierId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, String> names = userRepository.findAllById(courierIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getFullName, (a, b) -> a));
+        result.forEach(r -> r.setCourierName(names.get(r.getCourierId())));
+        return result;
+    }
+
     private void saveHistory(CourierStock stock,
                              BigDecimal before,
                              BigDecimal change,
@@ -187,23 +246,28 @@ public class CourierStockServiceImplement implements CourierStockService{
     }
 
     private CourierStockResponse mapToResponse(CourierStock stock){
-        Product product = productRepository.findProductByIdAndStatus(stock.getProductId(), Status.ACTIVE).orElseThrow();
+        BigDecimal price = productRepository.findProductByIdAndStatus(stock.getProductId(), Status.ACTIVE)
+                .map(Product::getPriceCost)
+                .orElse(stock.getProductPrice());
+        BigDecimal quantity = stock.getQuantity() != null ? stock.getQuantity() : BigDecimal.ZERO;
         return new CourierStockResponse(
                 stock.getId(),
                 stock.getProductId(),
                 stock.getProductName(),
-                stock.getQuantity(),
-                product.getPriceCost(),
-                stock.getTotalAmount(),
-                stock.getUnitType()
+                quantity,
+                price,
+                price != null ? quantity.multiply(price) : stock.getTotalAmount(),
+                stock.getUnitType(),
+                BigDecimal.ZERO,
+                0L
         );
     }
 
     public CourierStockHistoryResponse toResponse(CourierStockHistory history) {
         return new CourierStockHistoryResponse(
-//                history.getId(),
-//                history.getCourierId(),
-//                history.getProductId(),
+                history.getId(),
+                history.getCourierId(),
+                null,
                 history.getProductName(),
                 history.getBeforeQuantity(),
                 history.getChangeQuantity(),

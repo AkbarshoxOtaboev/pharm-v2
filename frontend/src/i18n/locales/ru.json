@@ -19,11 +19,13 @@
     "products": "Товары",
     "store": "Склад",
     "courierStock": "Запас курьера",
-    "cash": "Ежедневные отчёты",
+    "cash": "Касса",
     "courierReports": "Отчёты по курьерам",
     "createOrder": "Создать заказ",
     "saleLogs": "Журнал продаж",
-    "profile": "Профиль"
+    "profile": "Профиль",
+    "storeHistory": "История прихода",
+    "courierTransfers": "История трансферов"
   },
   "common": {
     "save": "Сохранить",
@@ -85,7 +87,8 @@
     "confirmDeleteAddress": "Удалить адрес?",
     "confirmReturnCash": "Вернуть наличные #{id}?",
     "empty": "—",
-    "photo": "Фото"
+    "photo": "Фото",
+    "currency": "сум"
   },
   "theme": {
     "light": "Светлая тема",
@@ -196,7 +199,16 @@
     "bonus": "Бонус",
     "sales": "Продажи",
     "monthlySales": "Продажи по месяцам",
-    "monthlySalesHint": "Сумма доставленных заказов за {year} год"
+    "monthlySalesHint": "Сумма доставленных заказов за {year} год",
+    "dailyOrdersChart": "Заказы по дням",
+    "dailySumsChart": "Суммы по дням",
+    "currentMonthHint": "{month} {year} — показатели по дням",
+    "cardSettings": "Отображение",
+    "cardSettingsHint": "Выберите карточки и диаграммы, которые будут видны на панели. Выбор сохраняется.",
+    "settingsCards": "Карточки",
+    "settingsCharts": "Диаграммы",
+    "showAllCards": "Показать все",
+    "noCards": "Ни одна карточка не выбрана."
   },
   "orders": {
     "title": "Заказы",
@@ -291,7 +303,17 @@
     "notFound": "Товары не найдены",
     "editTitle": "Редактировать товар",
     "createTitle": "Новый товар",
-    "sortNumber": "Порядковый номер"
+    "sortNumber": "Порядковый номер",
+    "addProduct": "Новый товар",
+    "formHint": "Поля со * обязательны",
+    "sectionMain": "Основные данные",
+    "sectionPrice": "Цены",
+    "sectionExtra": "Дополнительно",
+    "namePlaceholder": "Например: Парацетамол 500 мг",
+    "descriptionPlaceholder": "Кратко о товаре...",
+    "uploadPhoto": "Загрузить фото",
+    "changePhoto": "Заменить фото",
+    "photoHint": "PNG, JPG или WEBP"
   },
   "store": {
     "title": "Склад",
@@ -310,7 +332,7 @@
   },
   "courierStock": {
     "title": "Запас курьера",
-    "subtitle": "Передача, возврат и история",
+    "subtitle": "Текущие остатки у курьеров",
     "transferFromStore": "Передача со склада",
     "returnToStore": "Возврат на склад",
     "productFromStock": "Товар (из запаса)",
@@ -326,18 +348,40 @@
     "after": "После",
     "storeQty": "склад: {qty}",
     "transferOk": "Передача выполнена",
-    "returnOk": "Возврат выполнен"
+    "returnOk": "Возврат выполнен",
+    "giveToCourier": "Выдать курьеру",
+    "give": "Выдать",
+    "productTypes": "Виды товаров",
+    "productTypesHint": "Виды у курьера и в заказах",
+    "productCount": "Количество товаров",
+    "totalSum": "Общая сумма",
+    "splitHint": "У курьера {free} · в заказах {orders}",
+    "inOrders": "В заказах",
+    "inOrdersTitle": "В {count} активных заказах (спишется после доставки)",
+    "ordersShort": "заказов: {count}",
+    "inStore": "На складе",
+    "onCourier": "У курьера",
+    "afterTransfer": "После: на складе {store}, у курьера {courier}",
+    "afterReturn": "После возврата у курьера останется {qty}",
+    "returnAll": "Вернуть всё"
   },
   "cash": {
-    "title": "Ежедневные отчёты",
-    "subtitle": "Касса курьера и ежедневный отчёт",
-    "totalOnCourier": "Всего у курьера",
-    "entriesCount": "Количество записей",
-    "entries": "Записи кассы",
-    "empty": "Нет записей",
-    "dailyReport": "Ежедневный отчёт",
-    "reportEmpty": "Отчёт пуст",
-    "return": "Вернуть"
+    "title": "Касса",
+    "subtitle": "Сданные деньги, деньги у курьеров и ежедневный приём",
+    "onCouriers": "Деньги у курьеров",
+    "onCourier": "Деньги у курьера",
+    "handedInPeriod": "Сдано (за период)",
+    "ordersHint": "заказов: {count}",
+    "debtors": "Курьеры с деньгами",
+    "debtorsHint": "Всего курьеров: {total}",
+    "dailyReport": "Принято по дням",
+    "dailyHint": "Деньги, принятые в кассу за каждый день выбранного периода (все курьеры)",
+    "reportEmpty": "За выбранный период деньги не принимались",
+    "ordersCount": "Количество заказов",
+    "receivedSum": "Принятая сумма",
+    "exportExcel": "Скачать Excel",
+    "excelTitle": "Касса — деньги, принятые по дням",
+    "excelPeriod": "Период: {period}"
   },
   "courierReports": {
     "title": "Отчёты по курьерам",
@@ -353,7 +397,11 @@
     "orders": "Заказы курьера",
     "empty": "Заказы не найдены",
     "selectCourier": "Выберите курьера для просмотра отчёта",
-    "deliveredOnly": "Суммы считаются только по доставленным заказам"
+    "deliveredOnly": "Суммы считаются только по доставленным заказам",
+    "cashSection": "Касса курьера",
+    "onCourierHint": "заказов: {count} · самый старый {date}",
+    "noDebt": "У курьера нет несданных денег",
+    "handedHint": "заказов: {count} · последний {date}"
   },
   "saleLogs": {
     "title": "Журнал продаж",
@@ -433,6 +481,7 @@
     "loadDailyReport": "Не удалось загрузить ежедневный отчёт",
     "loadCourierReport": "Не удалось загрузить отчёт по курьеру",
     "returnCashFailed": "Не удалось вернуть",
+    "exportFailed": "Не удалось скачать файл",
     "loadSaleLogs": "Не удалось загрузить журнал продаж",
     "enterPasswords": "Введите текущий и новый пароль",
     "passwordMismatch": "Новые пароли не совпадают",
@@ -458,6 +507,21 @@
       "UNSUPPORTED_MEDIA_TYPE": "Тип данных не поддерживается",
       "FILE_TOO_LARGE": "Файл слишком большой",
       "INTERNAL_ERROR": "Ошибка сервера"
+    }
+  },
+  "storeHistory": {
+    "title": "История прихода",
+    "subtitle": "История поступлений на склад",
+    "pageQty": "Количество на странице",
+    "pageSum": "Сумма на странице"
+  },
+  "courierTransfers": {
+    "title": "История трансферов",
+    "subtitle": "Трансферы между складом и курьерами",
+    "allCouriers": "Все курьеры",
+    "action": {
+      "INCOME": "Выдано курьеру",
+      "RETURN": "Возврат на склад"
     }
   }
 }

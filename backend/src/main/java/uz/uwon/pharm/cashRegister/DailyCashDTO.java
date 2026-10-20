@@ -5,4 +5,5 @@ import java.time.LocalDate;
 public interface DailyCashDTO {
     LocalDate getDate();
     Double getTotal();
+    Long getOrdersCount();
 }

@@ -14,8 +14,12 @@ public class CourierStockResponse {
     private Long id;
     private Long productId;
     private String productName;
+    /** Free quantity on the courier (already excludes items reserved by active orders). */
     private BigDecimal quantity;
     private BigDecimal productPrice;
     private BigDecimal totalAmount;
     private UnitType unitType;
+    /** Quantity reserved by the courier's active (not yet delivered) orders. */
+    private BigDecimal inOrders;
+    private Long inOrdersCount;
 }

@@ -39,7 +39,9 @@ const navGroups = computed(() => [
     items: [
       { to: '/admin/products', label: t('nav.products'), icon: 'products' },
       { to: '/admin/store', label: t('nav.store'), icon: 'store' },
+      { to: '/admin/store-history', label: t('nav.storeHistory'), icon: 'arrivals' },
       { to: '/admin/courier-stock', label: t('nav.courierStock'), icon: 'courier' },
+      { to: '/admin/courier-transfers', label: t('nav.courierTransfers'), icon: 'transfers' },
     ],
   },
   {
@@ -51,10 +53,14 @@ const navGroups = computed(() => [
   },
 ])
 
+function isActive(to: string) {
+  return route.path === to || route.path.startsWith(`${to}/`)
+}
+
 const pageTitle = computed(() => {
   if (route.path.startsWith('/admin/profile')) return t('nav.profile')
   const items = navGroups.value.flatMap((group) => group.items)
-  return items.find((n) => route.path.startsWith(n.to))?.label || t('app.adminPanel')
+  return items.find((n) => isActive(n.to))?.label || t('app.adminPanel')
 })
 
 onMounted(() => {
@@ -112,12 +118,12 @@ onMounted(() => {
                 class="menu-item group"
                 :class="[
                   collapsed ? 'justify-center px-2' : '',
-                  route.path.startsWith(item.to) ? 'menu-item-active' : 'menu-item-inactive',
+                  isActive(item.to) ? 'menu-item-active' : 'menu-item-inactive',
                 ]"
                 :title="item.label"
                 @click="mobileOpen = false"
               >
-                <NavIcon :name="item.icon" :active="route.path.startsWith(item.to)" />
+                <NavIcon :name="item.icon" :active="isActive(item.to)" />
                 <span v-if="!collapsed">{{ item.label }}</span>
               </RouterLink>
             </li>
