@@ -122,6 +122,8 @@ function showAll() {
   visibleWidgets.value = defaultVisible()
 }
 
+const dailyTable = computed(() => [...daily.value].reverse())
+
 const dayLabels = computed(() =>
   daily.value.map((row) => {
     const formatted = dateTime(row.date)
@@ -268,7 +270,7 @@ onMounted(async () => {
       </div>
 
       <h2 class="mb-3 text-lg font-semibold text-gray-800 dark:text-white/90">{{ t('dashboard.dailyStats') }}</h2>
-      <DataTable :loading="false" :empty="daily.length ? undefined : t('common.noData')">
+      <DataTable :loading="false" :empty="dailyTable.length ? undefined : t('common.noData')">
         <template #head>
           <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.date') }}</th>
           <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.orders') }}</th>
@@ -278,7 +280,7 @@ onMounted(async () => {
           <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.cancelledSum') }}</th>
           <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.bonus') }}</th>
         </template>
-        <tr v-for="(row, idx) in daily" :key="row.date || idx">
+        <tr v-for="(row, idx) in dailyTable" :key="row.date || idx">
           <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ row.date || t('common.empty') }}</td>
           <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ row.ordersCount ?? 0 }}</td>
           <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ row.deliveredCount ?? 0 }}</td>
