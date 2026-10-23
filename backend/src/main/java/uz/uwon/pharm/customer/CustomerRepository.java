@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uz.uwon.pharm.utils.Status;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,4 +45,74 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     @Query("SELECT COUNT(c) FROM Customer c WHERE c.status = 0")
     long countActiveCustomers();
+
+    @Query(value = """
+            SELECT
+                COUNT(*) AS totalCustomers,
+                COUNT(*) FILTER (WHERE s.order_count > 0) AS activeBase,
+                COUNT(*) FILTER (WHERE s.order_count = 0) AS noOrders
+            FROM (
+                SELECT c.id, COUNT(o.id) AS order_count
+                FROM customers c
+                LEFT JOIN orders o
+                    ON o.customer_id = c.id
+                    AND o.created_at >= :from
+                    AND o.created_at < :to
+                    AND o.order_status <> 'DELETED'
+                WHERE c.status IS NULL OR c.status <> 2
+                GROUP BY c.id
+            ) s
+            """, nativeQuery = true)
+    CustomerSalesSummaryView salesSummary(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @Query(value = """
+            SELECT
+                c.id AS id,
+                c.full_name AS fullName,
+                c.phone AS phone,
+                COUNT(o.id) AS orderCount,
+                COUNT(o.id) FILTER (WHERE o.order_status = 'CANCELLED') AS cancelledCount,
+                COUNT(o.id) FILTER (WHERE o.order_status = 'DELIVERED') AS deliveredCount,
+                COALESCE(SUM(o.total_sum) FILTER (WHERE o.order_status = 'DELIVERED'), 0) AS orderSum
+            FROM customers c
+            LEFT JOIN orders o
+                ON o.customer_id = c.id
+                AND o.created_at >= :from
+                AND o.created_at < :to
+                AND o.order_status <> 'DELETED'
+            WHERE c.status IS NULL OR c.status <> 2
+            GROUP BY c.id, c.full_name, c.phone
+            HAVING (
+                (:segment = 'ORDERED' AND COUNT(o.id) > 0)
+                OR (:segment = 'NONE' AND COUNT(o.id) = 0)
+                OR (:segment = 'CANCELLED' AND COUNT(o.id) FILTER (WHERE o.order_status = 'CANCELLED') > 0)
+            )
+            ORDER BY COUNT(o.id) DESC, c.full_name ASC
+            """,
+            countQuery = """
+            SELECT COUNT(*) FROM (
+                SELECT c.id
+                FROM customers c
+                LEFT JOIN orders o
+                    ON o.customer_id = c.id
+                    AND o.created_at >= :from
+                    AND o.created_at < :to
+                    AND o.order_status <> 'DELETED'
+                WHERE c.status IS NULL OR c.status <> 2
+                GROUP BY c.id
+                HAVING (
+                    (:segment = 'ORDERED' AND COUNT(o.id) > 0)
+                    OR (:segment = 'NONE' AND COUNT(o.id) = 0)
+                    OR (:segment = 'CANCELLED' AND COUNT(o.id) FILTER (WHERE o.order_status = 'CANCELLED') > 0)
+                )
+            ) sales_count
+            """,
+            nativeQuery = true)
+    Page<CustomerSalesRowView> salesPage(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            @Param("segment") String segment,
+            Pageable pageable);
 }

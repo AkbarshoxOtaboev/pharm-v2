@@ -17,13 +17,17 @@ const collapsed = ref(false)
 const navGroups = computed(() => [
   {
     label: t('nav.groupMain'),
-    items: [{ to: '/admin/dashboard', label: t('nav.dashboard'), icon: 'dashboard' }],
+    items: [
+      { to: '/admin/dashboard', label: t('nav.main'), icon: 'dashboard' },
+      { to: '/admin/statistics', label: t('nav.statistics'), icon: 'stats' },
+    ],
   },
   {
     label: t('nav.groupSales'),
     items: [
       { to: '/admin/orders', label: t('nav.orders'), icon: 'orders' },
       { to: '/admin/customers', label: t('nav.customers'), icon: 'customers' },
+      { to: '/admin/sales-stats', label: t('nav.salesStats'), icon: 'report' },
       { to: '/admin/sale-logs', label: t('nav.saleLogs'), icon: 'sales' },
     ],
   },

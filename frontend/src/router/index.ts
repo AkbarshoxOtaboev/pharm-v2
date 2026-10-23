@@ -36,6 +36,11 @@ const router = createRouter({
           component: () => import('@/pages/admin/DashboardPage.vue'),
         },
         {
+          path: 'statistics',
+          name: 'admin-statistics',
+          component: () => import('@/pages/admin/StatisticsPage.vue'),
+        },
+        {
           path: 'orders',
           name: 'admin-orders',
           component: () => import('@/pages/admin/OrdersPage.vue'),
@@ -59,6 +64,11 @@ const router = createRouter({
           path: 'customers',
           name: 'admin-customers',
           component: () => import('@/pages/admin/CustomersPage.vue'),
+        },
+        {
+          path: 'sales-stats',
+          name: 'admin-sales-stats',
+          component: () => import('@/pages/admin/SalesStatsPage.vue'),
         },
         {
           path: 'categories',

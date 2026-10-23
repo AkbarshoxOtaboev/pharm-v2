@@ -5,6 +5,9 @@ import type {
   ApiResponse,
   CustomerDTO,
   CustomerResponse,
+  CustomerSalesRow,
+  CustomerSalesSegment,
+  CustomerSalesSummary,
   CustomerStatsResponse,
 } from '@/types/api'
 
@@ -15,6 +18,22 @@ export async function fetchCustomers() {
 
 export async function fetchCustomersPage(params: { q?: string; page: number; size: number }) {
   const { data } = await api.get<ApiResponse<CustomerStatsResponse[]>>('/customers/page', { params })
+  return data
+}
+
+export async function fetchCustomerSalesSummary(params: { from?: string; to?: string }) {
+  const { data } = await api.get<ApiResponse<CustomerSalesSummary>>('/customers/sales-summary', { params })
+  return data
+}
+
+export async function fetchCustomerSalesPage(params: {
+  from?: string
+  to?: string
+  segment: CustomerSalesSegment
+  page: number
+  size: number
+}) {
+  const { data } = await api.get<ApiResponse<CustomerSalesRow[]>>('/customers/sales-page', { params })
   return data
 }
 

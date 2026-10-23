@@ -8,13 +8,12 @@ import AppModal from '@/components/ui/AppModal.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import StatCard from '@/components/ui/StatCard.vue'
 import DataTable from '@/components/ui/DataTable.vue'
-import DailyLineChart from '@/components/charts/DailyLineChart.vue'
 import MonthlySalesChart from '@/components/charts/MonthlySalesChart.vue'
 import type { DailyStatDTO, OrderStatResponse } from '@/types/api'
-import { apiError, dateTime, money } from '@/utils/format'
+import { apiError, money } from '@/utils/format'
 
 const STAT_KEYS = ['clients', 'orders', 'deliveredSum', 'cancelledSum', 'dailySum', 'monthlySum'] as const
-const CHART_KEYS = ['monthlySales', 'dailyOrdersChart', 'dailySumsChart'] as const
+const CHART_KEYS = ['monthlySales'] as const
 const WIDGET_KEYS = [...STAT_KEYS, ...CHART_KEYS] as const
 type StatKey = (typeof STAT_KEYS)[number]
 type ChartKey = (typeof CHART_KEYS)[number]
@@ -35,8 +34,6 @@ const STAT_META: Record<StatKey, { tone: CardTone; icon: CardIcon; minClass: str
 
 const CHART_META: Record<ChartKey, { labelKey: string }> = {
   monthlySales: { labelKey: 'dashboard.monthlySales' },
-  dailyOrdersChart: { labelKey: 'dashboard.dailyOrdersChart' },
-  dailySumsChart: { labelKey: 'dashboard.dailySumsChart' },
 }
 
 function defaultVisible(): Record<WidgetKey, boolean> {
@@ -124,60 +121,6 @@ function showAll() {
 
 const dailyTable = computed(() => [...daily.value].reverse())
 
-const dayLabels = computed(() =>
-  daily.value.map((row) => {
-    const formatted = dateTime(row.date)
-    return formatted.length >= 5 ? formatted.slice(0, 5) : formatted || String(row.date ?? '')
-  }),
-)
-
-const monthHint = computed(() => {
-  const now = new Date()
-  return t('dashboard.currentMonthHint', { month: t(`months.${now.getMonth()}`), year: now.getFullYear() })
-})
-
-const ordersSeries = computed(() => [
-  {
-    key: 'orders',
-    name: t('dashboard.orders'),
-    color: '#465fff',
-    data: daily.value.map((r) => Number(r.ordersCount ?? 0)),
-  },
-  {
-    key: 'delivered',
-    name: t('dashboard.delivered'),
-    color: '#12b76a',
-    data: daily.value.map((r) => Number(r.deliveredCount ?? 0)),
-  },
-  {
-    key: 'cancelled',
-    name: t('dashboard.cancelled'),
-    color: '#f04438',
-    data: daily.value.map((r) => Number(r.cancelledCount ?? 0)),
-  },
-])
-
-const sumsSeries = computed(() => [
-  {
-    key: 'deliveredSum',
-    name: t('dashboard.deliveredSum'),
-    color: '#12b76a',
-    data: daily.value.map((r) => Number(r.deliveredSum ?? 0)),
-  },
-  {
-    key: 'cancelledSum',
-    name: t('dashboard.cancelledSum'),
-    color: '#f04438',
-    data: daily.value.map((r) => Number(r.cancelledSum ?? 0)),
-  },
-  {
-    key: 'bonus',
-    name: t('dashboard.bonus'),
-    color: '#f79009',
-    data: daily.value.map((r) => Number(r.deliveredBonusSum ?? 0)),
-  },
-])
-
 onMounted(async () => {
   loading.value = true
   error.value = ''
@@ -250,23 +193,6 @@ onMounted(async () => {
 
       <div v-if="isOn('monthlySales')" class="mb-6">
         <MonthlySalesChart :series-data="monthlySales" :year="year" />
-      </div>
-
-      <div class="mb-6 space-y-6">
-        <DailyLineChart
-          v-if="isOn('dailyOrdersChart')"
-          :title="t('dashboard.dailyOrdersChart')"
-          :hint="monthHint"
-          :categories="dayLabels"
-          :series-defs="ordersSeries"
-        />
-        <DailyLineChart
-          v-if="isOn('dailySumsChart')"
-          :title="t('dashboard.dailySumsChart')"
-          :hint="monthHint"
-          :categories="dayLabels"
-          :series-defs="sumsSeries"
-        />
       </div>
 
       <h2 class="mb-3 text-lg font-semibold text-gray-800 dark:text-white/90">{{ t('dashboard.dailyStats') }}</h2>

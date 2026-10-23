@@ -115,6 +115,16 @@ export interface OrderResponse {
   paymentType?: PaymentType
 }
 
+export interface CourierMonthStat {
+  courierId?: number
+  courierName?: string
+  allOrders?: number
+  deliveredOrders?: number
+  cancelledOrders?: number
+  deliveredTotalSum?: number
+  bonusQuantity?: number
+}
+
 export interface CourierStatsResponse {
   totalOrders?: number
   deliveredCount?: number
@@ -188,6 +198,24 @@ export interface CustomerResponse {
   status?: Status
   createdAt?: string
   lastAddress?: string | null
+}
+
+export type CustomerSalesSegment = 'ORDERED' | 'NONE' | 'CANCELLED'
+
+export interface CustomerSalesSummary {
+  totalCustomers?: number
+  activeBase?: number
+  noOrders?: number
+}
+
+export interface CustomerSalesRow {
+  id: number
+  fullName?: string
+  phone?: string
+  orderCount?: number
+  cancelledCount?: number
+  deliveredCount?: number
+  orderSum?: number
 }
 
 export interface CustomerStatsResponse extends CustomerResponse {

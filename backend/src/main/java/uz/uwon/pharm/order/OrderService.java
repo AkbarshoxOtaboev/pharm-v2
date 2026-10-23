@@ -2,6 +2,7 @@ package uz.uwon.pharm.order;
 
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
+import uz.uwon.pharm.users.CourierMonthlyStatProjection;
 import uz.uwon.pharm.users.User;
 
 import java.math.BigDecimal;
@@ -25,6 +26,8 @@ public interface OrderService {
     List<DailyStatDTO> getDailyStats();
 
     List<BigDecimal> getMonthlySales(int year);
+
+    List<CourierMonthlyStatProjection> getCourierMonthStats();
 
     Long pendingOrderCount(Long courierId);
 

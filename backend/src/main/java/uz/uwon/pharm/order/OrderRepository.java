@@ -207,12 +207,24 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
                             WHEN o.order_status = 'DELIVERED' THEN o.total_sum 
                             ELSE 0 
                         END
-                    ), 0) AS deliveredTotalSum
+                    ), 0) AS deliveredTotalSum,
+
+                    COALESCE((
+                        SELECT SUM(COALESCE(oi.quantity, 0))
+                        FROM orders bo
+                        JOIN order_items oi ON oi.order_id = bo.id
+                        WHERE bo.user_id = u.id
+                          AND bo.order_status = 'DELIVERED'
+                          AND oi.is_bonus IS TRUE
+                          AND bo.created_at >= :startDate
+                          AND bo.created_at < :endDate
+                    ), 0) AS bonusQuantity
             
                 FROM _users u
                 LEFT JOIN orders o 
                     ON u.id = o.user_id
-                    AND o.created_at BETWEEN :startDate AND :endDate
+                    AND o.created_at >= :startDate
+                    AND o.created_at < :endDate
             
                 WHERE u.role = 'COURIER'
             

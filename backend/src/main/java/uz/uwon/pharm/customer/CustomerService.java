@@ -2,6 +2,7 @@ package uz.uwon.pharm.customer;
 
 import org.springframework.data.domain.Page;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface CustomerService {
@@ -14,4 +15,8 @@ public interface CustomerService {
     boolean existsByPhone(String phone);
     CustomerResponse search(String phone);
     Page<CustomerStatsResponse> pageWithStats(String query, int page, int size);
+
+    CustomerSalesSummaryResponse salesSummary(LocalDate from, LocalDate to);
+
+    Page<CustomerSalesRowResponse> salesPage(LocalDate from, LocalDate to, String segment, int page, int size);
 }

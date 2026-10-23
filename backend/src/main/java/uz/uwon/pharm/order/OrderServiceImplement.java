@@ -454,6 +454,14 @@ public class OrderServiceImplement implements OrderService {
     }
 
     @Override
+    public List<CourierMonthlyStatProjection> getCourierMonthStats() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        LocalDateTime start = monthStart.atStartOfDay();
+        LocalDateTime end = monthStart.plusMonths(1).atStartOfDay();
+        return orderRepository.getCourierStats(start, end);
+    }
+
+    @Override
     public Long pendingOrderCount(Long courierId) {
         return orderRepository.pendingOrderCount(courierId);
     }

@@ -12,6 +12,7 @@ import uz.uwon.pharm.common.ApiResponse;
 import uz.uwon.pharm.order.DailyStatDTO;
 import uz.uwon.pharm.order.OrderService;
 import uz.uwon.pharm.order.OrderStatResponse;
+import uz.uwon.pharm.users.CourierMonthlyStatProjection;
 import uz.uwon.pharm.users.CourierStatsDto;
 import uz.uwon.pharm.users.UserService;
 
@@ -44,6 +45,11 @@ public class StatisticsApiController {
             @RequestParam(required = false) Integer year) {
         int y = year != null ? year : LocalDate.now().getYear();
         return ApiResponse.ok(orderService.getMonthlySales(y));
+    }
+
+    @GetMapping("/couriers/month")
+    public ApiResponse<List<CourierMonthlyStatProjection>> courierMonth() {
+        return ApiResponse.ok(orderService.getCourierMonthStats());
     }
 
     @GetMapping("/courier/{courierId}")

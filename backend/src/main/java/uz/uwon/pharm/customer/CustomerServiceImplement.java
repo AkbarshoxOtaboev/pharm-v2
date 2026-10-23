@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uz.uwon.pharm.common.PageRequests;
 import uz.uwon.pharm.exceptions.NotFoundException;
 import uz.uwon.pharm.order.OrderRepository;
 import uz.uwon.pharm.utils.PhoneFormatter;
@@ -13,6 +15,8 @@ import uz.uwon.pharm.utils.Status;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -106,6 +110,40 @@ public class CustomerServiceImplement implements CustomerService {
                         digits.isEmpty() ? "#" : "%" + digits + "%",
                         pageable)
                 .map(this::mapToStats);
+    }
+
+    private static final LocalDateTime MIN_DATE = LocalDate.of(1970, 1, 1).atStartOfDay();
+    private static final LocalDateTime MAX_DATE = LocalDate.of(9999, 12, 31).atStartOfDay();
+
+    @Override
+    @Transactional(readOnly = true)
+    public CustomerSalesSummaryResponse salesSummary(LocalDate from, LocalDate to) {
+        LocalDateTime start = from != null ? from.atStartOfDay() : MIN_DATE;
+        LocalDateTime end = to != null ? to.plusDays(1).atStartOfDay() : MAX_DATE;
+        CustomerSalesSummaryView view = customerRepository.salesSummary(start, end);
+        return new CustomerSalesSummaryResponse(
+                view == null || view.getTotalCustomers() == null ? 0 : view.getTotalCustomers(),
+                view == null || view.getActiveBase() == null ? 0 : view.getActiveBase(),
+                view == null || view.getNoOrders() == null ? 0 : view.getNoOrders()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CustomerSalesRowResponse> salesPage(LocalDate from, LocalDate to, String segment, int page, int size) {
+        LocalDateTime start = from != null ? from.atStartOfDay() : MIN_DATE;
+        LocalDateTime end = to != null ? to.plusDays(1).atStartOfDay() : MAX_DATE;
+        return customerRepository
+                .salesPage(start, end, CustomerSalesSegment.from(segment).name(), PageRequests.of(page, size, Sort.unsorted()))
+                .map(row -> new CustomerSalesRowResponse(
+                        row.getId(),
+                        row.getFullName(),
+                        row.getPhone(),
+                        row.getOrderCount() == null ? 0 : row.getOrderCount(),
+                        row.getCancelledCount() == null ? 0 : row.getCancelledCount(),
+                        row.getDeliveredCount() == null ? 0 : row.getDeliveredCount(),
+                        row.getOrderSum() == null ? BigDecimal.ZERO : row.getOrderSum()
+                ));
     }
 
     private CustomerStatsResponse mapToStats(CustomerStatsView v) {

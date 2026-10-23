@@ -11,4 +11,6 @@ public interface CourierMonthlyStatProjection {
     Long getCancelledOrders();
 
     BigDecimal getDeliveredTotalSum();
+
+    BigDecimal getBonusQuantity();
 }
