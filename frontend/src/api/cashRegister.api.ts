@@ -4,6 +4,7 @@ import type {
   CashRegisterResponse,
   CashRegisterStatus,
   CashSummaryResponse,
+  CourierPeriodCash,
   DailyCashDTO,
 } from '@/types/api'
 
@@ -41,6 +42,17 @@ export async function fetchCashSummary(params: { from?: string; to?: string; cou
   const { data } = await api.get<ApiResponse<CashSummaryResponse>>('/cash-register/summary', {
     params,
   })
+  return data
+}
+
+export async function fetchCourierPeriodCash(
+  courierId: number,
+  params: { from?: string; to?: string } = {},
+) {
+  const { data } = await api.get<ApiResponse<CourierPeriodCash>>(
+    `/cash-register/courier/${courierId}/period`,
+    { params },
+  )
   return data
 }
 

@@ -28,8 +28,10 @@ export async function fetchMonthlySales(year?: number) {
   return data
 }
 
-export async function fetchCourierMonthStats() {
-  const { data } = await api.get<ApiResponse<CourierMonthStat[]>>('/statistics/couriers/month')
+export async function fetchCourierMonthStats(params: { from?: string; to?: string } = {}) {
+  const { data } = await api.get<ApiResponse<CourierMonthStat[]>>('/statistics/couriers/month', {
+    params,
+  })
   return data
 }
 

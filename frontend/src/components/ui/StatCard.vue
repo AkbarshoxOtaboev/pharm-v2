@@ -5,7 +5,7 @@ withDefaults(
     value: string | number
     hint?: string
     tone?: 'brand' | 'success' | 'warning' | 'error' | 'purple' | 'cyan'
-    icon?: 'users' | 'orders' | 'delivered' | 'cancelled' | 'daily' | 'monthly' | 'layers' | 'cash' | 'wallet' | 'truck'
+    icon?: 'users' | 'orders' | 'delivered' | 'cancelled' | 'daily' | 'monthly' | 'layers' | 'cash' | 'wallet' | 'truck' | 'gift'
   }>(),
   { tone: 'brand', icon: 'orders' },
 )
@@ -82,6 +82,12 @@ const toneClass: Record<string, string> = {
             <path d="M14 10H18L21 13V16H14V10Z" />
             <circle cx="7" cy="17.5" r="1.5" />
             <circle cx="17.5" cy="17.5" r="1.5" />
+          </template>
+          <template v-else-if="icon === 'gift'">
+            <rect x="3" y="10" width="18" height="11" rx="1.5" />
+            <path d="M12 10V21M3 14H21" />
+            <path d="M12 10C12 10 8 5 6 7C4.5 8.5 6.5 10 8.5 10H12" />
+            <path d="M12 10C12 10 16 5 18 7C19.5 8.5 17.5 10 15.5 10H12" />
           </template>
           <template v-else-if="icon === 'daily'">
             <rect x="3" y="5" width="18" height="16" rx="2" />

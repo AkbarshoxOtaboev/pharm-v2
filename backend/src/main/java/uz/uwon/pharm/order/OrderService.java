@@ -29,6 +29,8 @@ public interface OrderService {
 
     List<CourierMonthlyStatProjection> getCourierMonthStats();
 
+    List<CourierMonthlyStatProjection> getCourierMonthStats(LocalDateTime start, LocalDateTime end);
+
     Long pendingOrderCount(Long courierId);
 
     void update(Long id, OrderDTO dto);

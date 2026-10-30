@@ -6,15 +6,18 @@ const props = withDefaults(
   defineProps<{
     avatar?: string | null
     name?: string
-    size?: 'sm' | 'md' | 'lg'
+    size?: 'sm' | 'md' | 'lg' | 'xl'
   }>(),
   { size: 'md' },
 )
 
 const src = computed(() => resolveAvatarUrl(props.avatar))
-const sizeClass = computed(() =>
-  props.size === 'sm' ? 'size-8' : props.size === 'lg' ? 'size-16' : 'size-10',
-)
+const sizeClass = computed(() => {
+  if (props.size === 'sm') return 'size-8'
+  if (props.size === 'lg') return 'size-16'
+  if (props.size === 'xl') return 'size-24'
+  return 'size-10'
+})
 </script>
 
 <template>

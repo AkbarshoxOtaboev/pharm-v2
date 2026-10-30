@@ -18,6 +18,8 @@ public interface CashRegisterService {
 
     CashSummaryResponse summary(LocalDate from, LocalDate to, Long courierId);
 
+    CourierPeriodCashResponse periodCash(Long courierId, LocalDate from, LocalDate to);
+
     Page<DailyCashDTO> dailyPage(LocalDate from, LocalDate to, int page, int size);
 
     Page<CashRegisterResponse> page(Long courierId, CashRegisterStatus status,

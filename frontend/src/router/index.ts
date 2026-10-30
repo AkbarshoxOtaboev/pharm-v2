@@ -66,6 +66,16 @@ const router = createRouter({
           component: () => import('@/pages/admin/CustomersPage.vue'),
         },
         {
+          path: 'couriers',
+          name: 'admin-couriers',
+          component: () => import('@/pages/admin/CouriersPage.vue'),
+        },
+        {
+          path: 'couriers/:id',
+          name: 'admin-couriers-detail',
+          component: () => import('@/pages/admin/CourierDetailPage.vue'),
+        },
+        {
           path: 'sales-stats',
           name: 'admin-sales-stats',
           component: () => import('@/pages/admin/SalesStatsPage.vue'),

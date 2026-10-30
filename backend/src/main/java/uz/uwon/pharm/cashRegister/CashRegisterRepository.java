@@ -102,4 +102,30 @@ public interface CashRegisterRepository extends JpaRepository<CashRegister, Long
 """)
     List<CourierCashView> courierBalances(@Param("from") LocalDateTime from,
                                           @Param("to") LocalDateTime to);
+
+    /**
+     * Davrdagi yetkazilgan buyurtmalar bo'yicha pul:
+     * collected = handed + onCourier (har doim).
+     * Buyurtma yaratilgan sana (orders.created_at) bo'yicha filtr — statistika kartalari bilan mos.
+     */
+    @Query(value = """
+            SELECT
+                COALESCE(SUM(c.order_total_sum), 0) AS collectedSum,
+                COALESCE(SUM(CASE WHEN c.register_status = 'ON_ADMIN'
+                                  THEN c.order_total_sum ELSE 0 END), 0) AS handedSum,
+                COALESCE(SUM(CASE WHEN c.register_status = 'ON_COURIER'
+                                  THEN c.order_total_sum ELSE 0 END), 0) AS onCourierSum
+            FROM cash_registers c
+            JOIN orders o ON o.id = c.order_id
+            WHERE c.courier_id = :courierId
+              AND c.status = 'ACTIVE'
+              AND o.order_status = 'DELIVERED'
+              AND o.created_at >= :from
+              AND o.created_at < :to
+            """, nativeQuery = true)
+    CourierPeriodCashView periodCashByCourier(
+            @Param("courierId") Long courierId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
+    );
 }

@@ -115,6 +115,22 @@ public class CashRegisterServiceImplement implements CashRegisterService  {
 
     @Override
     @Transactional(readOnly = true)
+    public CourierPeriodCashResponse periodCash(Long courierId, LocalDate from, LocalDate to) {
+        LocalDateTime start = from != null ? from.atStartOfDay() : MIN_DATE;
+        LocalDateTime end = to != null ? to.plusDays(1).atStartOfDay() : MAX_DATE;
+        CourierPeriodCashView view = repository.periodCashByCourier(courierId, start, end);
+        if (view == null) {
+            return new CourierPeriodCashResponse(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        }
+        return new CourierPeriodCashResponse(
+                nz(view.getCollectedSum()),
+                nz(view.getHandedSum()),
+                nz(view.getOnCourierSum())
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public CashSummaryResponse summary(LocalDate from, LocalDate to, Long courierId) {
         LocalDateTime start = from != null ? from.atStartOfDay() : MIN_DATE;
         LocalDateTime end = to != null ? to.plusDays(1).atStartOfDay() : MAX_DATE;

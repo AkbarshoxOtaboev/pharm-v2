@@ -33,32 +33,43 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
             """)
     Long pendingOrderCount(@Param("courierId") Long courierId);
 
-    @Query("""
-                SELECT 
-                    COUNT(o) as totalOrders,
-            
-                    SUM(CASE WHEN o.orderStatus = uz.uwon.pharm.order.OrderStatus.DELIVERED THEN 1 ELSE 0 END) as deliveredCount,
-                    SUM(CASE WHEN o.orderStatus = uz.uwon.pharm.order.OrderStatus.CANCELLED THEN 1 ELSE 0 END) as canceledCount,
-                    SUM(CASE WHEN o.orderStatus = uz.uwon.pharm.order.OrderStatus.PENDING THEN 1 ELSE 0 END) as pendingCount,
-            
-                    SUM(CASE 
-                        WHEN o.orderStatus = uz.uwon.pharm.order.OrderStatus.DELIVERED 
-                             AND o.paymentType = uz.uwon.pharm.order.PaymentType.CASH 
-                        THEN o.totalSum ELSE 0 END) as cashTotal,
-            
-                    SUM(CASE 
-                        WHEN o.orderStatus = uz.uwon.pharm.order.OrderStatus.DELIVERED 
-                             AND o.paymentType = uz.uwon.pharm.order.PaymentType.CARD 
-                        THEN o.totalSum ELSE 0 END) as cardTotal,
-            
-                    SUM(CASE 
-                        WHEN o.orderStatus = uz.uwon.pharm.order.OrderStatus.DELIVERED 
-                        THEN o.totalSum ELSE 0 END) as totalSum
-            
-                FROM Order o
-                WHERE o.user.id = :userId
-                  AND o.createdAt >= :start AND o.createdAt < :end
-            """)
+    @Query(value = """
+                SELECT
+                    COUNT(o.id) AS totalOrders,
+                    COALESCE(SUM(CASE WHEN o.order_status = 'DELIVERED' THEN 1 ELSE 0 END), 0) AS deliveredCount,
+                    COALESCE(SUM(CASE WHEN o.order_status = 'SHIPPED' THEN 1 ELSE 0 END), 0) AS shippedCount,
+                    COALESCE(SUM(CASE WHEN o.order_status = 'CANCELLED' THEN 1 ELSE 0 END), 0) AS canceledCount,
+                    COALESCE(SUM(CASE WHEN o.order_status = 'PENDING' THEN 1 ELSE 0 END), 0) AS pendingCount,
+                    COALESCE(SUM(CASE
+                        WHEN o.order_status = 'DELIVERED' AND o.payment_type = 0
+                        THEN o.total_sum ELSE 0 END), 0) AS cashTotal,
+                    COALESCE(SUM(CASE
+                        WHEN o.order_status = 'DELIVERED' AND o.payment_type = 1
+                        THEN o.total_sum ELSE 0 END), 0) AS cardTotal,
+                    COALESCE(SUM(CASE
+                        WHEN o.order_status = 'DELIVERED'
+                        THEN o.total_sum ELSE 0 END), 0) AS totalSum,
+                    COALESCE(SUM(CASE
+                        WHEN o.order_status = 'SHIPPED'
+                        THEN o.total_sum ELSE 0 END), 0) AS shippedSum,
+                    COALESCE(SUM(CASE
+                        WHEN o.order_status = 'CANCELLED'
+                        THEN o.total_sum ELSE 0 END), 0) AS cancelledSum,
+                    COALESCE((
+                        SELECT SUM(COALESCE(oi.price, 0) * COALESCE(oi.quantity, 0))
+                        FROM orders bo
+                        JOIN order_items oi ON oi.order_id = bo.id
+                        WHERE bo.user_id = :userId
+                          AND bo.order_status = 'DELIVERED'
+                          AND oi.is_bonus IS TRUE
+                          AND bo.created_at >= :start
+                          AND bo.created_at < :end
+                    ), 0) AS bonusSum
+                FROM orders o
+                WHERE o.user_id = :userId
+                  AND o.created_at >= :start
+                  AND o.created_at < :end
+            """, nativeQuery = true)
     CourierStatsDto getCourierStats(
             @Param("userId") Long userId,
             @Param("start") LocalDateTime start,
@@ -196,6 +207,11 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
                         WHEN o.order_status = 'DELIVERED' THEN 1 
                         ELSE 0 
                     END) AS deliveredOrders,
+
+                    SUM(CASE 
+                        WHEN o.order_status = 'SHIPPED' THEN 1 
+                        ELSE 0 
+                    END) AS shippedOrders,
             
                     SUM(CASE 
                         WHEN o.order_status = 'CANCELLED' THEN 1 
@@ -209,6 +225,13 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
                         END
                     ), 0) AS deliveredTotalSum,
 
+                    COALESCE(SUM(
+                        CASE 
+                            WHEN o.order_status = 'CANCELLED' THEN o.total_sum 
+                            ELSE 0 
+                        END
+                    ), 0) AS cancelledTotalSum,
+
                     COALESCE((
                         SELECT SUM(COALESCE(oi.quantity, 0))
                         FROM orders bo
@@ -218,7 +241,18 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
                           AND oi.is_bonus IS TRUE
                           AND bo.created_at >= :startDate
                           AND bo.created_at < :endDate
-                    ), 0) AS bonusQuantity
+                    ), 0) AS bonusQuantity,
+
+                    COALESCE((
+                        SELECT SUM(COALESCE(oi.price, 0) * COALESCE(oi.quantity, 0))
+                        FROM orders bo
+                        JOIN order_items oi ON oi.order_id = bo.id
+                        WHERE bo.user_id = u.id
+                          AND bo.order_status = 'DELIVERED'
+                          AND oi.is_bonus IS TRUE
+                          AND bo.created_at >= :startDate
+                          AND bo.created_at < :endDate
+                    ), 0) AS bonusTotalSum
             
                 FROM _users u
                 LEFT JOIN orders o 
@@ -227,6 +261,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
                     AND o.created_at < :endDate
             
                 WHERE u.role = 'COURIER'
+                  AND u.status <> 'DELETED'
             
                 GROUP BY u.id, u.full_name
                 ORDER BY u.full_name

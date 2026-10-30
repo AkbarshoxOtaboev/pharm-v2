@@ -27,6 +27,7 @@ const navGroups = computed(() => [
     items: [
       { to: '/admin/orders', label: t('nav.orders'), icon: 'orders' },
       { to: '/admin/customers', label: t('nav.customers'), icon: 'customers' },
+      { to: '/admin/couriers', label: t('nav.couriers'), icon: 'courier' },
       { to: '/admin/sales-stats', label: t('nav.salesStats'), icon: 'report' },
       { to: '/admin/sale-logs', label: t('nav.saleLogs'), icon: 'sales' },
     ],
@@ -63,6 +64,7 @@ function isActive(to: string) {
 
 const pageTitle = computed(() => {
   if (route.path.startsWith('/admin/profile')) return t('nav.profile')
+  if (route.path.match(/^\/admin\/couriers\/\d+/)) return t('couriers.detailTitle')
   const items = navGroups.value.flatMap((group) => group.items)
   return items.find((n) => isActive(n.to))?.label || t('app.adminPanel')
 })

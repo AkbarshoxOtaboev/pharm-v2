@@ -34,6 +34,14 @@ public class CashRegisterApiController {
         return ApiResponse.ok(Map.of("total", cashRegisterService.totalCourierCash(courierId)));
     }
 
+    @GetMapping("/courier/{courierId}/period")
+    public ApiResponse<CourierPeriodCashResponse> period(
+            @PathVariable Long courierId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ApiResponse.ok(cashRegisterService.periodCash(courierId, from, to));
+    }
+
     @PatchMapping("/{id}/return")
     public ApiResponse<Void> returnCash(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
         String comment = body != null ? body.get("comment") : null;

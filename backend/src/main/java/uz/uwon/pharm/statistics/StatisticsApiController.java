@@ -48,8 +48,17 @@ public class StatisticsApiController {
     }
 
     @GetMapping("/couriers/month")
-    public ApiResponse<List<CourierMonthlyStatProjection>> courierMonth() {
-        return ApiResponse.ok(orderService.getCourierMonthStats());
+    public ApiResponse<List<CourierMonthlyStatProjection>> courierMonth(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        if (from == null && to == null) {
+            return ApiResponse.ok(orderService.getCourierMonthStats());
+        }
+        LocalDate startDay = from != null ? from : LocalDate.now().withDayOfMonth(1);
+        LocalDate endDay = to != null ? to : LocalDate.now();
+        LocalDateTime start = startDay.atStartOfDay();
+        LocalDateTime end = endDay.plusDays(1).atStartOfDay();
+        return ApiResponse.ok(orderService.getCourierMonthStats(start, end));
     }
 
     @GetMapping("/courier/{courierId}")

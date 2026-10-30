@@ -20,6 +20,7 @@ export const useAuthStore = defineStore('auth', () => {
   const avatar = ref(localStorage.getItem('avatar') || 'default-1')
   const personalPhone = ref(localStorage.getItem('personalPhone') || '')
   const workPhone = ref(localStorage.getItem('workPhone') || '')
+  const status = ref(localStorage.getItem('userStatus') || '')
   const role = ref<Role | null>((localStorage.getItem('role') as Role) || null)
 
   const isAuthenticated = computed(() => !!accessToken.value)
@@ -36,6 +37,8 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('avatar', avatar.value || 'default-1')
     localStorage.setItem('personalPhone', personalPhone.value || '')
     localStorage.setItem('workPhone', workPhone.value || '')
+    if (status.value) localStorage.setItem('userStatus', status.value)
+    else localStorage.removeItem('userStatus')
     if (role.value) localStorage.setItem('role', role.value)
     else localStorage.removeItem('role')
   }
@@ -58,6 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
     avatar.value = me.avatar || 'default-1'
     personalPhone.value = me.personalPhone || ''
     workPhone.value = me.workPhone || ''
+    status.value = me.status || ''
     role.value = me.role
     persist()
   }
@@ -129,6 +133,7 @@ export const useAuthStore = defineStore('auth', () => {
     avatar.value = 'default-1'
     personalPhone.value = ''
     workPhone.value = ''
+    status.value = ''
     role.value = null
     persist()
   }
@@ -151,6 +156,7 @@ export const useAuthStore = defineStore('auth', () => {
     avatar,
     personalPhone,
     workPhone,
+    status,
     role,
     isAuthenticated,
     homePath,

@@ -120,19 +120,26 @@ export interface CourierMonthStat {
   courierName?: string
   allOrders?: number
   deliveredOrders?: number
+  shippedOrders?: number
   cancelledOrders?: number
   deliveredTotalSum?: number
+  cancelledTotalSum?: number
   bonusQuantity?: number
+  bonusTotalSum?: number
 }
 
 export interface CourierStatsResponse {
   totalOrders?: number
   deliveredCount?: number
+  shippedCount?: number
   canceledCount?: number
   pendingCount?: number
   cashTotal?: number
   cardTotal?: number
   totalSum?: number
+  shippedSum?: number
+  cancelledSum?: number
+  bonusSum?: number
 }
 
 export interface OrderItemResponse {
@@ -413,6 +420,13 @@ export interface CashSummaryResponse {
   handedSum: number
   handedCount: number
   couriers: CourierCashRow[]
+}
+
+/** Davrdagi yetkazilgan buyurtmalar: collected = handed + onCourier */
+export interface CourierPeriodCash {
+  collectedSum: number
+  handedSum: number
+  onCourierSum: number
 }
 
 export interface DailyCashDTO {
