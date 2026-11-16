@@ -2,8 +2,10 @@ package uz.uwon.pharm.category;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uz.uwon.pharm.exceptions.BadRequestException;
 import uz.uwon.pharm.exceptions.NotFoundException;
 import uz.uwon.pharm.subCategory.SubCategoryRepository;
 import uz.uwon.pharm.subCategory.SubCategoryService;
@@ -33,8 +35,16 @@ public class CategoryServiceImplement implements CategoryService {
 
     @Override
     public List<CategoryResponse> findAllCategories() {
-        log.info("Finding all categories");
-        return repository.findAllByStatusOrderByIdAsc(Status.ACTIVE).stream().map(this::mapToCategoryResponse).collect(Collectors.toList());
+        return findAllCategories(false);
+    }
+
+    @Override
+    public List<CategoryResponse> findAllCategories(boolean includeInactive) {
+        log.info("Finding categories, includeInactive={}", includeInactive);
+        List<Category> categories = includeInactive
+                ? repository.findAll(Sort.by(Sort.Direction.ASC, "id"))
+                : repository.findAllByStatusOrderByIdAsc(Status.ACTIVE);
+        return categories.stream().map(this::mapToCategoryResponse).collect(Collectors.toList());
     }
 
     @Override
@@ -46,7 +56,7 @@ public class CategoryServiceImplement implements CategoryService {
     @Override
     public void update(Long categoryId, CategoryDTO dto) {
         log.info("Updating category with id {}", categoryId);
-        Category category = repository.findByIdAndStatus(categoryId, Status.ACTIVE).orElseThrow(()-> new NotFoundException("Category not found "+categoryId));
+        Category category = requireMutable(categoryId);
         category.setName(dto.getName());
         category.setDescription(dto.getDescription());
     }
@@ -54,8 +64,29 @@ public class CategoryServiceImplement implements CategoryService {
     @Override
     public void delete(Long categoryId) {
         log.info("Deleting category with id {}", categoryId);
-        Category category = repository.findByIdAndStatus(categoryId,Status.ACTIVE).orElseThrow(()-> new NotFoundException("Category not found "+categoryId));
+        Category category = requireMutable(categoryId);
         category.setStatus(Status.DELETED);
+    }
+
+    @Override
+    public void block(Long categoryId) {
+        log.info("Blocking category with id {}", categoryId);
+        requireMutable(categoryId).setStatus(Status.BLOCKED);
+    }
+
+    @Override
+    public void unblock(Long categoryId) {
+        log.info("Unblocking category with id {}", categoryId);
+        requireMutable(categoryId).setStatus(Status.ACTIVE);
+    }
+
+    private Category requireMutable(Long categoryId) {
+        Category category = repository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Category not found " + categoryId));
+        if (category.getStatus() == Status.DELETED) {
+            throw new BadRequestException("Deleted category cannot be changed");
+        }
+        return category;
     }
 
     private CategoryResponse mapToCategoryResponse(Category category) {

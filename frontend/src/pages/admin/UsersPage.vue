@@ -11,8 +11,8 @@ import {
   updateUser,
 } from '@/api/users.api'
 import { uploadAvatar } from '@/api/auth.api'
-import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -21,7 +21,7 @@ import DataTable from '@/components/ui/DataTable.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import UserAvatar from '@/components/ui/UserAvatar.vue'
 import type { Role, UserDto, UserResponse } from '@/types/api'
-import { apiError, statusTone } from '@/utils/format'
+import { apiError } from '@/utils/format'
 
 const ROLES: Role[] = ['ADMIN', 'OPERATOR', 'COURIER', 'VIEWER']
 
@@ -33,6 +33,8 @@ const modalOpen = ref(false)
 const saving = ref(false)
 const editingUsername = ref<string | null>(null)
 const formError = ref('')
+
+const pending = ref(new Set<string>())
 
 const form = reactive({
   fullName: '',
@@ -145,16 +147,51 @@ async function onDelete(u: UserResponse) {
   }
 }
 
+function userStatus(u: UserResponse) {
+  return String(u.status).toUpperCase()
+}
+
+function isDeleted(u: UserResponse) {
+  return userStatus(u) === 'DELETED'
+}
+
+function isActive(u: UserResponse) {
+  return userStatus(u) === 'ACTIVE'
+}
+
+function isPending(u: UserResponse) {
+  return pending.value.has(u.username)
+}
+
+function statusText(u: UserResponse) {
+  if (isDeleted(u)) return enumLabel('status', 'DELETED')
+  return enumLabel('status', isActive(u) ? 'ACTIVE' : 'INACTIVE')
+}
+
+function switchTitle(u: UserResponse) {
+  if (isDeleted(u)) return t('users.deletedLocked')
+  return isActive(u) ? t('users.block') : t('users.unblock')
+}
+
 async function toggleBlock(u: UserResponse) {
+  const status = userStatus(u)
+  if (status === 'DELETED' || pending.value.has(u.username)) return
+
+  const prev = u.status
+  const wasBlocked = status === 'BLOCKED'
+  u.status = wasBlocked ? 'ACTIVE' : 'BLOCKED'
+  pending.value = new Set(pending.value).add(u.username)
+
   try {
-    if (String(u.status).toUpperCase() === 'BLOCKED') {
-      await unblockUser(u.username)
-    } else {
-      await blockUser(u.username)
-    }
-    await load()
+    if (wasBlocked) await unblockUser(u.username)
+    else await blockUser(u.username)
   } catch (e) {
+    u.status = prev
     error.value = apiError(e, 'errors.changeStatus')
+  } finally {
+    const next = new Set(pending.value)
+    next.delete(u.username)
+    pending.value = next
   }
 }
 
@@ -188,11 +225,11 @@ onMounted(load)
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.status') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.actions') }}</th>
       </template>
-      <tr v-for="u in users" :key="u.id">
+      <tr v-for="u in users" :key="u.id" :class="isDeleted(u) ? 'bg-gray-50/80 dark:bg-white/[0.02]' : ''">
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <div class="flex items-center gap-3">
-            <UserAvatar :avatar="u.avatar" :name="u.fullName" size="sm" />
-            <span class="font-medium">{{ u.fullName }}</span>
+            <UserAvatar :avatar="u.avatar" :name="u.fullName" size="sm" :class="isDeleted(u) ? 'opacity-50' : ''" />
+            <span class="font-medium" :class="isDeleted(u) ? 'text-gray-400 line-through decoration-gray-300 dark:text-gray-500' : ''">{{ u.fullName }}</span>
           </div>
         </td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ u.username }}</td>
@@ -200,16 +237,67 @@ onMounted(load)
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           {{ u.personalPhone || u.workPhone || t('common.empty') }}
         </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
-          <AppBadge :tone="statusTone(String(u.status))">{{ enumLabel('status', String(u.status)) }}</AppBadge>
+        <td class="px-5 py-3">
+          <div class="flex items-center gap-2.5">
+            <button
+              type="button"
+              role="switch"
+              class="relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed dark:focus-visible:ring-offset-gray-900"
+              :class="[
+                isDeleted(u)
+                  ? 'bg-gray-200 opacity-50 dark:bg-gray-700'
+                  : isActive(u)
+                    ? 'bg-success-500 hover:bg-success-600'
+                    : 'bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600',
+                isPending(u) ? 'opacity-60' : '',
+              ]"
+              :aria-checked="isActive(u)"
+              :aria-label="switchTitle(u)"
+              :title="switchTitle(u)"
+              :disabled="isDeleted(u) || isPending(u)"
+              @click="toggleBlock(u)"
+            >
+              <span
+                class="pointer-events-none absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow-sm transition-transform duration-200"
+                :class="isActive(u) ? 'translate-x-5' : 'translate-x-0'"
+              />
+            </button>
+            <span
+              class="min-w-16 text-theme-xs font-medium"
+              :class="
+                isDeleted(u)
+                  ? 'text-error-500'
+                  : isActive(u)
+                    ? 'text-success-600 dark:text-success-500'
+                    : 'text-gray-500 dark:text-gray-400'
+              "
+            >
+              {{ statusText(u) }}
+            </span>
+          </div>
         </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
-          <div class="flex flex-wrap gap-2">
-            <AppButton size="sm" variant="secondary" @click="openEdit(u)">{{ t('common.edit') }}</AppButton>
-            <AppButton size="sm" variant="ghost" @click="toggleBlock(u)">
-              {{ String(u.status).toUpperCase() === 'BLOCKED' ? t('users.unblock') : t('users.block') }}
-            </AppButton>
-            <AppButton size="sm" variant="danger" @click="onDelete(u)">{{ t('common.delete') }}</AppButton>
+        <td class="px-5 py-3">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-brand-50 hover:text-brand-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 dark:text-gray-400 dark:hover:bg-brand-500/10 dark:disabled:hover:bg-transparent dark:disabled:hover:text-gray-500"
+              :title="t('common.edit')"
+              :aria-label="t('common.edit')"
+              :disabled="isDeleted(u)"
+              @click="openEdit(u)"
+            >
+              <AppIcon name="pencil" class="size-4.5" />
+            </button>
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-error-50 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 dark:text-gray-400 dark:hover:bg-error-500/10 dark:disabled:hover:bg-transparent dark:disabled:hover:text-gray-500"
+              :title="t('common.delete')"
+              :aria-label="t('common.delete')"
+              :disabled="isDeleted(u)"
+              @click="onDelete(u)"
+            >
+              <AppIcon name="trash" class="size-4.5" />
+            </button>
           </div>
         </td>
       </tr>

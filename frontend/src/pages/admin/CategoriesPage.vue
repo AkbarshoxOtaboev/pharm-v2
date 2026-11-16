@@ -3,29 +3,32 @@ import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { enumLabel } from '@/i18n'
 import {
+  blockCategory,
   createCategory,
   createSubcategory,
   deleteCategory,
   deleteSubcategory,
   fetchCategories,
   fetchSubcategories,
+  unblockCategory,
   updateCategory,
   updateSubcategory,
 } from '@/api/categories.api'
-import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppTextarea from '@/components/ui/AppTextarea.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import type { CategoryResponse, SubCategoryResponse } from '@/types/api'
-import { apiError, statusTone } from '@/utils/format'
+import { apiError } from '@/utils/format'
 
 const { t } = useI18n()
 const categories = ref<CategoryResponse[]>([])
 const loading = ref(false)
 const error = ref('')
+const pending = ref(new Set<number>())
 
 const catModal = ref(false)
 const catSaving = ref(false)
@@ -46,7 +49,7 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const res = await fetchCategories()
+    const res = await fetchCategories(true)
     categories.value = res.data || []
   } catch (e) {
     error.value = apiError(e, 'errors.loadCategories')
@@ -164,6 +167,54 @@ async function saveSub() {
   }
 }
 
+function categoryStatus(c: CategoryResponse) {
+  return String(c.status || '').toUpperCase()
+}
+
+function isDeleted(c: CategoryResponse) {
+  return categoryStatus(c) === 'DELETED'
+}
+
+function isActive(c: CategoryResponse) {
+  return categoryStatus(c) === 'ACTIVE'
+}
+
+function isPending(c: CategoryResponse) {
+  return pending.value.has(c.id)
+}
+
+function statusText(c: CategoryResponse) {
+  if (isDeleted(c)) return enumLabel('status', 'DELETED')
+  return enumLabel('status', isActive(c) ? 'ACTIVE' : 'INACTIVE')
+}
+
+function switchTitle(c: CategoryResponse) {
+  if (isDeleted(c)) return t('categories.deletedLocked')
+  return isActive(c) ? t('categories.block') : t('categories.unblock')
+}
+
+async function toggleStatus(c: CategoryResponse) {
+  const status = categoryStatus(c)
+  if (status === 'DELETED' || pending.value.has(c.id)) return
+
+  const prev = c.status
+  const wasBlocked = status === 'BLOCKED'
+  c.status = wasBlocked ? 'ACTIVE' : 'BLOCKED'
+  pending.value = new Set(pending.value).add(c.id)
+
+  try {
+    if (wasBlocked) await unblockCategory(c.id)
+    else await blockCategory(c.id)
+  } catch (e) {
+    c.status = prev
+    error.value = apiError(e, 'errors.changeStatus')
+  } finally {
+    const next = new Set(pending.value)
+    next.delete(c.id)
+    pending.value = next
+  }
+}
+
 async function removeSub(s: SubCategoryResponse) {
   if (!confirm(t('common.confirmDeleteNamed', { name: s.name }))) return
   try {
@@ -207,18 +258,85 @@ onMounted(load)
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.status') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.actions') }}</th>
       </template>
-      <tr v-for="c in categories" :key="c.id">
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ c.name }}</td>
+      <tr v-for="c in categories" :key="c.id" :class="isDeleted(c) ? 'bg-gray-50/80 dark:bg-white/[0.02]' : ''">
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
+          <span class="font-medium" :class="isDeleted(c) ? 'text-gray-400 line-through decoration-gray-300 dark:text-gray-500' : ''">
+            {{ c.name }}
+          </span>
+        </td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ c.description || t('common.empty') }}</td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ c.subcategoryCount ?? 0 }}</td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
-          <AppBadge :tone="statusTone(c.status)">{{ enumLabel('status', c.status, t('common.empty')) }}</AppBadge>
+        <td class="px-5 py-3">
+          <div class="flex items-center gap-2.5">
+            <button
+              type="button"
+              role="switch"
+              class="relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed dark:focus-visible:ring-offset-gray-900"
+              :class="[
+                isDeleted(c)
+                  ? 'bg-gray-200 opacity-50 dark:bg-gray-700'
+                  : isActive(c)
+                    ? 'bg-success-500 hover:bg-success-600'
+                    : 'bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600',
+                isPending(c) ? 'opacity-60' : '',
+              ]"
+              :aria-checked="isActive(c)"
+              :aria-label="switchTitle(c)"
+              :title="switchTitle(c)"
+              :disabled="isDeleted(c) || isPending(c)"
+              @click="toggleStatus(c)"
+            >
+              <span
+                class="pointer-events-none absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow-sm transition-transform duration-200"
+                :class="isActive(c) ? 'translate-x-5' : 'translate-x-0'"
+              />
+            </button>
+            <span
+              class="min-w-16 text-theme-xs font-medium"
+              :class="
+                isDeleted(c)
+                  ? 'text-error-500'
+                  : isActive(c)
+                    ? 'text-success-600 dark:text-success-500'
+                    : 'text-gray-500 dark:text-gray-400'
+              "
+            >
+              {{ statusText(c) }}
+            </span>
+          </div>
         </td>
-        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
-          <div class="flex flex-wrap gap-2">
-            <AppButton size="sm" variant="secondary" @click="openEditCat(c)">{{ t('common.edit') }}</AppButton>
-            <AppButton size="sm" variant="ghost" @click="openSubs(c)">{{ t('categories.subcategories') }}</AppButton>
-            <AppButton size="sm" variant="danger" @click="onDeleteCat(c)">{{ t('common.delete') }}</AppButton>
+        <td class="px-5 py-3">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-brand-50 hover:text-brand-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 dark:text-gray-400 dark:hover:bg-brand-500/10 dark:disabled:hover:bg-transparent dark:disabled:hover:text-gray-500"
+              :title="t('common.edit')"
+              :aria-label="t('common.edit')"
+              :disabled="isDeleted(c)"
+              @click="openEditCat(c)"
+            >
+              <AppIcon name="pencil" class="size-4.5" />
+            </button>
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white/90 dark:disabled:hover:bg-transparent dark:disabled:hover:text-gray-500"
+              :title="t('categories.subcategories')"
+              :aria-label="t('categories.subcategories')"
+              :disabled="isDeleted(c)"
+              @click="openSubs(c)"
+            >
+              <AppIcon name="layers" class="size-4.5" />
+            </button>
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-error-50 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 dark:text-gray-400 dark:hover:bg-error-500/10 dark:disabled:hover:bg-transparent dark:disabled:hover:text-gray-500"
+              :title="t('common.delete')"
+              :aria-label="t('common.delete')"
+              :disabled="isDeleted(c)"
+              @click="onDeleteCat(c)"
+            >
+              <AppIcon name="trash" class="size-4.5" />
+            </button>
           </div>
         </td>
       </tr>

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, RouterLink, RouterView } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth.store'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import NavIcon from '@/components/ui/NavIcon.vue'
 import ThemeToggle from '@/components/layout/ThemeToggle.vue'
 import LocaleSwitcher from '@/components/layout/LocaleSwitcher.vue'
@@ -158,6 +159,14 @@ onMounted(() => {
           </div>
 
           <div class="flex items-center gap-2 sm:gap-3">
+            <RouterLink
+              to="/admin/cash-register"
+              class="inline-flex h-10 items-center gap-2 rounded-lg bg-brand-500 px-3 text-theme-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600 sm:px-4"
+              :title="t('nav.cash')"
+            >
+              <AppIcon name="cash" class="size-5" />
+              <span class="hidden sm:inline">{{ t('nav.cash') }}</span>
+            </RouterLink>
             <RouterLink
               to="/admin/orders/create"
               class="inline-flex h-10 items-center gap-2 rounded-lg bg-success-500 px-3 text-theme-sm font-medium text-white shadow-theme-xs transition hover:bg-success-600 sm:px-4"

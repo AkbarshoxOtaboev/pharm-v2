@@ -20,8 +20,10 @@ public class CategoriesApiController {
     private final SubCategoryService subCategoryService;
 
     @GetMapping
-    public ApiResponse<List<CategoryResponse>> list() {
-        return ApiResponse.ok(categoryService.findAllCategories());
+    public ApiResponse<List<CategoryResponse>> list(
+            @RequestParam(defaultValue = "false") boolean all
+    ) {
+        return ApiResponse.ok(categoryService.findAllCategories(all));
     }
 
     @GetMapping("/{id}")
@@ -44,6 +46,18 @@ public class CategoriesApiController {
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         categoryService.delete(id);
+        return ApiResponse.ok(null);
+    }
+
+    @PatchMapping("/{id}/block")
+    public ApiResponse<Void> block(@PathVariable Long id) {
+        categoryService.block(id);
+        return ApiResponse.ok(null);
+    }
+
+    @PatchMapping("/{id}/unblock")
+    public ApiResponse<Void> unblock(@PathVariable Long id) {
+        categoryService.unblock(id);
         return ApiResponse.ok(null);
     }
 

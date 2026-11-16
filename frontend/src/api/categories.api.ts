@@ -7,8 +7,10 @@ import type {
   SubCategoryResponse,
 } from '@/types/api'
 
-export async function fetchCategories() {
-  const { data } = await api.get<ApiResponse<CategoryResponse[]>>('/categories')
+export async function fetchCategories(all = false) {
+  const { data } = await api.get<ApiResponse<CategoryResponse[]>>('/categories', {
+    params: all ? { all: true } : undefined,
+  })
   return data
 }
 
@@ -29,6 +31,16 @@ export async function updateCategory(id: number, dto: CategoryDTO) {
 
 export async function deleteCategory(id: number) {
   const { data } = await api.delete<ApiResponse<null>>(`/categories/${id}`)
+  return data
+}
+
+export async function blockCategory(id: number) {
+  const { data } = await api.patch<ApiResponse<null>>(`/categories/${id}/block`)
+  return data
+}
+
+export async function unblockCategory(id: number) {
+  const { data } = await api.patch<ApiResponse<null>>(`/categories/${id}/unblock`)
   return data
 }
 

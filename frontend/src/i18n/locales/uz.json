@@ -287,8 +287,9 @@
     "personalPhone": "Shaxsiy telefon",
     "workPhone": "Ish telefoni",
     "passwordKeep": "Bo‘sh qoldirish — o‘zgarmaydi",
-    "block": "Bloklash",
-    "unblock": "Blokdan chiqarish"
+    "block": "Nofaol qilish",
+    "unblock": "Faol qilish",
+    "deletedLocked": "O‘chirilgan foydalanuvchini yoqib bo‘lmaydi"
   },
   "customers": {
     "title": "Mijozlar",
@@ -326,7 +327,10 @@
     "editTitle": "Kategoriyani tahrirlash",
     "createTitle": "Yangi kategoriya",
     "editSub": "Tahrirlash",
-    "newSub": "Yangi subkategoriya"
+    "newSub": "Yangi subkategoriya",
+    "block": "Nofaol qilish",
+    "unblock": "Faol qilish",
+    "deletedLocked": "O‘chirilgan kategoriyani yoqib bo‘lmaydi"
   },
   "products": {
     "title": "Mahsulotlar",
