@@ -8,6 +8,7 @@ import { searchCustomers } from '@/api/customers.api'
 import { fetchProducts } from '@/api/products.api'
 import { fetchCourierStock } from '@/api/courierStock.api'
 import { fetchCouriers } from '@/api/users.api'
+import { fetchDistricts, fetchRegions, type DistrictItem, type RegionItem } from '@/api/locations.api'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import AppInput from '@/components/ui/AppInput.vue'
@@ -50,6 +51,10 @@ let searchSeq = 0
 const phone = ref('')
 const fullName = ref('')
 const address = ref('')
+const regionId = ref('')
+const districtId = ref('')
+const regions = ref<RegionItem[]>([])
+const districts = ref<DistrictItem[]>([])
 const phoneDigits = computed(() => uzPhoneDigits(phone.value))
 const phoneComplete = computed(() => phoneDigits.value.length === 9)
 const paymentType = ref<PaymentType>('CASH')
@@ -117,8 +122,9 @@ const overStock = computed(() => items.value.find((i) => availableFor(i.productI
 
 async function loadLookups() {
   try {
-    const [cRes, pRes] = await Promise.all([fetchCouriers(), fetchProducts()])
+    const [cRes, pRes, rRes] = await Promise.all([fetchCouriers(), fetchProducts(), fetchRegions()])
     couriers.value = cRes.data || []
+    regions.value = rRes.data || []
     priceById.value = new Map(
       (pRes.data || [])
         .filter((p) => p.priceCost != null)
@@ -128,6 +134,20 @@ async function loadLookups() {
     error.value = apiError(e, 'errors.loadData')
   }
 }
+
+watch(regionId, async (id) => {
+  districtId.value = ''
+  if (!id) {
+    districts.value = []
+    return
+  }
+  try {
+    const res = await fetchDistricts(Number(id))
+    districts.value = res.data || []
+  } catch (e) {
+    error.value = apiError(e, 'errors.loadData')
+  }
+})
 
 watch(courierId, async (id) => {
   const seq = ++stockSeq
@@ -219,6 +239,10 @@ async function submit() {
     error.value = t('errors.courierRequired')
     return
   }
+  if (!regionId.value || !districtId.value) {
+    error.value = t('errors.locationRequired')
+    return
+  }
   if (!items.value.length) {
     error.value = t('errors.minOneProduct')
     return
@@ -241,6 +265,8 @@ async function submit() {
     fullName: fullName.value.trim(),
     phone: `998${phoneDigits.value}`,
     address: address.value.trim() || undefined,
+    regionId: Number(regionId.value),
+    districtId: Number(districtId.value),
     paymentType: paymentType.value,
     courierId: Number(courierId.value),
     items: mapped,
@@ -321,6 +347,14 @@ onMounted(loadLookups)
               </p>
             </div>
             <AppInput v-model="fullName" :label="t('orders.fullName')" />
+            <AppSelect v-model="regionId" :label="t('locations.region')">
+              <option value="">{{ t('locations.pickRegion') }}</option>
+              <option v-for="r in regions" :key="r.id" :value="String(r.id)">{{ r.name }}</option>
+            </AppSelect>
+            <AppSelect v-model="districtId" :label="t('locations.place')" :disabled="!regionId">
+              <option value="">{{ t('locations.pickDistrict') }}</option>
+              <option v-for="d in districts" :key="d.id" :value="String(d.id)">{{ d.name }}</option>
+            </AppSelect>
             <AppInput v-model="address" :label="t('common.address')" class="md:col-span-2" />
           </div>
         </section>

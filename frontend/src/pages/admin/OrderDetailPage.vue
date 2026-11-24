@@ -109,6 +109,10 @@ onMounted(load)
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.phone') }}:</span> {{ detail.phone || t('common.empty') }}</p>
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.amount') }}:</span> {{ money(detail.totalAmount) }}</p>
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.address') }}:</span> {{ detail.address || t('common.empty') }}</p>
+          <p>
+            <span class="text-gray-500 dark:text-gray-400">{{ t('locations.place') }}:</span>
+            {{ detail.districtName || t('common.empty') }}
+          </p>
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.house') }}:</span> {{ detail.house || t('common.empty') }}</p>
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.entrance') }}:</span> {{ detail.entrance || t('common.empty') }}</p>
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.apartment') }}:</span> {{ detail.apartment || t('common.empty') }}</p>

@@ -55,6 +55,7 @@ const navGroups = computed(() => [
     items: [
       { to: '/admin/users', label: t('nav.users'), icon: 'users' },
       { to: '/admin/categories', label: t('nav.categories'), icon: 'categories' },
+      { to: '/admin/locations', label: t('nav.locations'), icon: 'locations' },
     ],
   },
 ])

@@ -113,6 +113,8 @@ export interface OrderResponse {
   updatedAt?: string
   courierName?: string
   paymentType?: PaymentType
+  regionName?: string
+  districtName?: string
 }
 
 export interface CourierMonthStat {
@@ -161,6 +163,8 @@ export interface OrderDetailResponse {
   orderNumber?: string
   createdDate?: string
   address?: string
+  regionName?: string
+  districtName?: string
   house?: string
   entrance?: string
   apartment?: string
@@ -184,6 +188,8 @@ export interface OrderDTO {
   fullName?: string
   phone?: string
   address?: string
+  regionId?: number
+  districtId?: number
   home?: string
   entrance?: string
   apartment?: string

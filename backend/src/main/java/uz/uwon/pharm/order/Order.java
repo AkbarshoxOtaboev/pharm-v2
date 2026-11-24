@@ -6,6 +6,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SourceType;
 import org.hibernate.annotations.UpdateTimestamp;
 import uz.uwon.pharm.customer.Customer;
+import uz.uwon.pharm.location.District;
+import uz.uwon.pharm.location.Region;
 import uz.uwon.pharm.orderDeliveridinfo.OrderDeliveredInfo;
 import uz.uwon.pharm.orderitem.OrderItem;
 import uz.uwon.pharm.users.User;
@@ -53,6 +55,12 @@ public class Order {
     private List<OrderItem> orderItems;
     private BigDecimal totalSum;
     private String address;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "region_id")
+    private Region region;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "district_id")
+    private District district;
     private String home;
     private String entrance;
     private String apartment;

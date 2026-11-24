@@ -16,7 +16,11 @@ import uz.uwon.pharm.courierStock.CourierStock;
 import uz.uwon.pharm.courierStock.CourierStockRepository;
 import uz.uwon.pharm.customer.Customer;
 import uz.uwon.pharm.customer.CustomerRepository;
+import uz.uwon.pharm.exceptions.BadRequestException;
 import uz.uwon.pharm.exceptions.NotFoundException;
+import uz.uwon.pharm.location.District;
+import uz.uwon.pharm.location.LocationService;
+import uz.uwon.pharm.location.Region;
 import uz.uwon.pharm.orderDeliveridinfo.OrderDeliveredInfo;
 import uz.uwon.pharm.orderDeliveridinfo.OrderDeliveredInfoRepository;
 import uz.uwon.pharm.orderitem.OrderItem;
@@ -54,6 +58,7 @@ public class OrderServiceImplement implements OrderService {
     private final CashRegisterService cashRegisterService;
     private final SaleLogService saleLogService;
     private final UserService userService;
+    private final LocationService locationService;
 
     @Override
     public void save(OrderDTO dto) {
@@ -162,6 +167,7 @@ public class OrderServiceImplement implements OrderService {
                 .paymentType(dto.getPaymentType())
                 .orderStatus(OrderStatus.SHIPPED)
                 .build();
+        applyLocation(order, dto);
 
         // =========================
         // 4. LINK ITEMS
@@ -200,10 +206,11 @@ public class OrderServiceImplement implements OrderService {
             LocalDate to,
             int page,
             int size,
-            Long userId
+            Long userId,
+            Long districtId
     ) {
 
-        Specification<Order> spec = OrderSpecification.filter(id, phone, status, from, to, userId);
+        Specification<Order> spec = OrderSpecification.filter(id, phone, status, from, to, userId, districtId);
 
         // 🔒 exclude DELETED for VIEWER
         if (userService.getCurrentUser().getRole().equals(Role.VIEWER)) {
@@ -568,6 +575,19 @@ public class OrderServiceImplement implements OrderService {
         orderRepository.save(order);
     }
 
+    private void applyLocation(Order order, OrderDTO dto) {
+        if (dto.getRegionId() == null || dto.getDistrictId() == null) {
+            throw new BadRequestException("Region and district are required");
+        }
+        Region region = locationService.requireRegion(dto.getRegionId());
+        District district = locationService.requireDistrict(dto.getDistrictId());
+        if (!district.getRegion().getId().equals(region.getId())) {
+            throw new BadRequestException("District does not belong to the region");
+        }
+        order.setRegion(region);
+        order.setDistrict(district);
+    }
+
     private void changeStock(CourierStock stock, BigDecimal delta) {
         BigDecimal quantity = stock.getQuantity().add(delta);
         stock.setQuantity(quantity);
@@ -603,7 +623,9 @@ public class OrderServiceImplement implements OrderService {
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
                 order.getUser().getFullName(),
-                order.getPaymentType()
+                order.getPaymentType(),
+                order.getRegion() == null ? null : order.getRegion().getName(),
+                order.getDistrict() == null ? null : order.getDistrict().getName()
         );
     }
 
@@ -636,6 +658,8 @@ public class OrderServiceImplement implements OrderService {
                 order.getOrderNumber(),
                 order.getCreatedAt(),
                 order.getAddress(),
+                order.getRegion() == null ? null : order.getRegion().getName(),
+                order.getDistrict() == null ? null : order.getDistrict().getName(),
                 order.getHome(),
                 order.getEntrance(),
                 order.getApartment(),

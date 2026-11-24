@@ -51,6 +51,7 @@ export interface OrderListParams {
   phone?: string
   status?: OrderStatus
   userId?: number
+  districtId?: number
   fromDate?: string
   toDate?: string
   page?: number

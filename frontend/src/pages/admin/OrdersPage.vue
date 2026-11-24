@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Swal from 'sweetalert2'
 import { enumLabel } from '@/i18n'
@@ -12,6 +12,7 @@ import {
   type OrderListParams,
 } from '@/api/orders.api'
 import { fetchCouriers } from '@/api/users.api'
+import { fetchDistricts, type DistrictItem } from '@/api/locations.api'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppModal from '@/components/ui/AppModal.vue'
@@ -20,6 +21,7 @@ import DataTable from '@/components/ui/DataTable.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import type { OrderDetailResponse, OrderResponse, OrderStatus, UserResponse } from '@/types/api'
 import { apiError, fileUrl, money, statusSelectClass } from '@/utils/format'
+import { printOrderReceipts, type ReceiptLabels } from '@/utils/printReceipts'
 
 const ORDER_STATUSES: OrderStatus[] = [
   'NEW',
@@ -67,6 +69,8 @@ const totalElements = ref(0)
 const phone = ref('')
 const status = ref('')
 const courierId = ref('')
+const districtId = ref('')
+const districts = ref<DistrictItem[]>([])
 const dateDefaults = defaultDateRange()
 const fromDate = ref(dateDefaults.from)
 const toDate = ref(dateDefaults.to)
@@ -84,7 +88,22 @@ const commentsError = ref('')
 const comments = ref<OrderDeliveredInfoResponse[]>([])
 const commentsOrderId = ref<number | null>(null)
 
+const printOpen = ref(false)
+const printLoading = ref(false)
+const printBusy = ref(false)
+const printError = ref('')
+const printCourierId = ref('')
+const printStatus = ref('')
+const printDistrictId = ref('')
+const printFromDate = ref(dateDefaults.from)
+const printToDate = ref(dateDefaults.to)
+const printOrders = ref<OrderResponse[]>([])
+const printSelected = ref<number[]>([])
+const printingId = ref<number | null>(null)
+
 let filterTimer: ReturnType<typeof setTimeout> | null = null
+let printLoadSeq = 0
+let printFilterSilent = false
 
 async function load() {
   loading.value = true
@@ -97,6 +116,7 @@ async function load() {
     if (phone.value.trim()) params.phone = phone.value.trim()
     if (status.value) params.status = status.value
     if (courierId.value) params.userId = Number(courierId.value)
+    if (districtId.value) params.districtId = Number(districtId.value)
     if (fromDate.value) params.fromDate = fromDate.value
     if (toDate.value) params.toDate = toDate.value
 
@@ -123,6 +143,7 @@ function resetFilters() {
   phone.value = ''
   status.value = ''
   courierId.value = ''
+  districtId.value = ''
   const range = defaultDateRange()
   fromDate.value = range.from
   toDate.value = range.to
@@ -131,7 +152,7 @@ function resetFilters() {
   load()
 }
 
-watch([phone, status, courierId, fromDate, toDate], () => scheduleLoad(true))
+watch([phone, status, courierId, districtId, fromDate, toDate], () => scheduleLoad(true))
 watch(size, () => scheduleLoad(true))
 
 async function openDetail(id: number) {
@@ -165,6 +186,144 @@ async function openComments(id: number) {
     commentsLoading.value = false
   }
 }
+
+function receiptLabels(): ReceiptLabels {
+  return {
+    title: t('orders.receipt'),
+    number: t('common.number'),
+    date: t('common.date'),
+    customer: t('common.customer'),
+    phone: t('common.phone'),
+    address: t('common.address'),
+    place: t('locations.place'),
+    house: t('common.house'),
+    entrance: t('common.entrance'),
+    apartment: t('common.apartment'),
+    floor: t('common.floor'),
+    orientation: t('common.orientation'),
+    courier: t('common.courier'),
+    product: t('common.product'),
+    quantity: t('common.quantity'),
+    price: t('common.price'),
+    amount: t('common.amount'),
+    bonus: t('common.bonus'),
+    total: t('common.total'),
+    empty: t('common.empty'),
+  }
+}
+
+async function detailsOf(ids: number[]) {
+  const details = []
+  for (let i = 0; i < ids.length; i += 8) {
+    const chunk = await Promise.all(
+      ids.slice(i, i + 8).map(async (id) => {
+        const res = await fetchOrder(id)
+        return res.data
+      }),
+    )
+    for (const row of chunk) {
+      if (row) details.push(row)
+    }
+  }
+  return details
+}
+
+async function printIds(ids: number[]) {
+  if (!ids.length) {
+    printError.value = t('orders.printEmpty')
+    return false
+  }
+  const details = await detailsOf(ids)
+  const opened = printOrderReceipts(details, receiptLabels())
+  if (!opened) printError.value = t('orders.printFailed')
+  return opened
+}
+
+async function printOne(id: number) {
+  printingId.value = id
+  error.value = ''
+  try {
+    const opened = await printIds([id])
+    if (!opened) error.value = printError.value
+  } catch (e) {
+    error.value = apiError(e, 'errors.loadOrderDetail')
+  } finally {
+    printingId.value = null
+  }
+}
+
+async function loadPrintOrders() {
+  const seq = ++printLoadSeq
+  printLoading.value = true
+  printError.value = ''
+  try {
+    const params: OrderListParams = { page: 0, size: -1 }
+    if (printCourierId.value) params.userId = Number(printCourierId.value)
+    if (printStatus.value) params.status = printStatus.value as OrderStatus
+    if (printDistrictId.value) params.districtId = Number(printDistrictId.value)
+    if (printFromDate.value) params.fromDate = printFromDate.value
+    if (printToDate.value) params.toDate = printToDate.value
+    const res = await fetchOrders(params)
+    if (seq !== printLoadSeq) return
+    printOrders.value = res.data || []
+    printSelected.value = printSelected.value.filter((id) => printOrders.value.some((o) => o.id === id))
+  } catch (e) {
+    if (seq !== printLoadSeq) return
+    printError.value = apiError(e, 'errors.loadOrders')
+    printOrders.value = []
+  } finally {
+    if (seq === printLoadSeq) printLoading.value = false
+  }
+}
+
+function openPrintModal() {
+  printSelected.value = []
+  printError.value = ''
+  printFilterSilent = true
+  printCourierId.value = courierId.value
+  printStatus.value = status.value
+  printDistrictId.value = districtId.value
+  printFromDate.value = fromDate.value
+  printToDate.value = toDate.value
+  printOpen.value = true
+  void loadPrintOrders()
+  void nextTick(() => {
+    printFilterSilent = false
+  })
+}
+
+function togglePrinted(id: number) {
+  printSelected.value = printSelected.value.includes(id)
+    ? printSelected.value.filter((item) => item !== id)
+    : [...printSelected.value, id]
+}
+
+function togglePrintAll() {
+  const ids = printOrders.value.map((o) => o.id)
+  const allOn = ids.length > 0 && ids.every((id) => printSelected.value.includes(id))
+  printSelected.value = allOn ? [] : ids
+}
+
+async function printChosen() {
+  if (!printSelected.value.length) {
+    printError.value = t('orders.printEmpty')
+    return
+  }
+  printBusy.value = true
+  printError.value = ''
+  try {
+    const opened = await printIds(printSelected.value)
+    if (opened) printOpen.value = false
+  } catch (e) {
+    printError.value = apiError(e, 'errors.loadOrderDetail')
+  } finally {
+    printBusy.value = false
+  }
+}
+
+watch([printCourierId, printStatus, printDistrictId, printFromDate, printToDate], () => {
+  if (printOpen.value && !printFilterSilent) void loadPrintOrders()
+})
 
 async function saveStatus() {
   if (!detail.value?.orderId || !newStatus.value) return
@@ -238,10 +397,12 @@ async function onRowStatusChange(order: OrderResponse, event: Event) {
 
 onMounted(async () => {
   try {
-    const res = await fetchCouriers()
-    couriers.value = res.data || []
+    const [courierRes, districtRes] = await Promise.all([fetchCouriers(), fetchDistricts()])
+    couriers.value = courierRes.data || []
+    districts.value = districtRes.data || []
   } catch {
     couriers.value = []
+    districts.value = []
   }
   await load()
 })
@@ -251,12 +412,13 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('orders.title')" :subtitle="t('orders.subtitle')">
       <template #actions>
+        <AppButton variant="secondary" @click="openPrintModal">{{ t('orders.printChecks') }}</AppButton>
         <AppButton @click="$router.push('/admin/orders/create')">{{ t('orders.newOrder') }}</AppButton>
       </template>
     </PageHeader>
 
     <div class="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]">
-      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
         <AppInput v-model="phone" :label="t('common.phone')" placeholder="+998..." />
         <AppSelect v-model="status" :label="t('common.status')">
           <option value="">{{ t('common.all') }}</option>
@@ -265,6 +427,12 @@ onMounted(async () => {
         <AppSelect v-model="courierId" :label="t('common.courier')">
           <option value="">{{ t('common.all') }}</option>
           <option v-for="c in couriers" :key="c.id" :value="String(c.id)">{{ c.fullName }}</option>
+        </AppSelect>
+        <AppSelect v-model="districtId" :label="t('locations.place')">
+          <option value="">{{ t('common.all') }}</option>
+          <option v-for="d in districts" :key="d.id" :value="String(d.id)">
+            {{ d.regionName ? `${d.regionName} — ${d.name}` : d.name }}
+          </option>
         </AppSelect>
         <AppInput v-model="fromDate" :label="t('common.from')" type="date" />
         <AppInput v-model="toDate" :label="t('common.to')" type="date" />
@@ -304,6 +472,7 @@ onMounted(async () => {
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.id') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.customer') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.phone') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('locations.place') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.status') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.amount') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.courier') }}</th>
@@ -313,6 +482,7 @@ onMounted(async () => {
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ o.id }}</td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ o.customerName || t('common.empty') }}</td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ o.customerPhone || t('common.empty') }}</td>
+        <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ o.districtName || t('common.empty') }}</td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <select
             class="h-9 min-w-36 rounded-lg border px-2.5 text-theme-sm font-medium shadow-theme-xs focus:outline-hidden focus:ring-3 disabled:cursor-not-allowed disabled:opacity-80"
@@ -328,6 +498,19 @@ onMounted(async () => {
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ o.courierName || t('common.empty') }}</td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <div class="flex items-center gap-1.5">
+            <button
+              type="button"
+              class="inline-flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5"
+              :title="t('orders.printOne')"
+              :disabled="printingId === o.id"
+              @click="printOne(o.id)"
+            >
+              <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M6 9V3h12v6" stroke-linejoin="round" />
+                <path d="M6 18H4.5A1.5 1.5 0 0 1 3 16.5v-5A1.5 1.5 0 0 1 4.5 10h15a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H18" stroke-linejoin="round" />
+                <path d="M6 14h12v7H6v-7Z" stroke-linejoin="round" />
+              </svg>
+            </button>
             <button
               type="button"
               class="inline-flex size-9 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5"
@@ -396,6 +579,10 @@ onMounted(async () => {
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.customer') }}:</span> {{ detail.fullName || t('common.empty') }}</p>
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.phone') }}:</span> {{ detail.phone || t('common.empty') }}</p>
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.address') }}:</span> {{ detail.address || t('common.empty') }}</p>
+          <p>
+            <span class="text-gray-500 dark:text-gray-400">{{ t('locations.place') }}:</span>
+            {{ detail.districtName || t('common.empty') }}
+          </p>
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.house') }}:</span> {{ detail.house || t('common.empty') }}</p>
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.entrance') }}:</span> {{ detail.entrance || t('common.empty') }}</p>
           <p><span class="text-gray-500 dark:text-gray-400">{{ t('common.apartment') }}:</span> {{ detail.apartment || t('common.empty') }}</p>
@@ -478,6 +665,80 @@ onMounted(async () => {
             class="mt-3 max-h-64 w-full rounded-lg object-contain bg-gray-50 dark:bg-white/[0.03]"
           />
         </div>
+      </div>
+    </AppModal>
+
+    <AppModal :open="printOpen" :title="t('orders.printChecks')" @close="printOpen = false">
+      <p class="mb-4 text-theme-sm text-gray-500 dark:text-gray-400">{{ t('orders.printHint') }}</p>
+      <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <AppSelect v-model="printCourierId" :label="t('common.courier')">
+          <option value="">{{ t('common.all') }}</option>
+          <option v-for="c in couriers" :key="c.id" :value="String(c.id)">{{ c.fullName }}</option>
+        </AppSelect>
+        <AppSelect v-model="printStatus" :label="t('common.status')">
+          <option value="">{{ t('common.all') }}</option>
+          <option v-for="s in ORDER_STATUSES" :key="s" :value="s">{{ enumLabel('orderStatus', s) }}</option>
+        </AppSelect>
+        <AppSelect v-model="printDistrictId" :label="t('locations.place')">
+          <option value="">{{ t('common.all') }}</option>
+          <option v-for="d in districts" :key="d.id" :value="String(d.id)">
+            {{ d.regionName ? `${d.regionName} — ${d.name}` : d.name }}
+          </option>
+        </AppSelect>
+        <div class="grid grid-cols-2 gap-3">
+          <AppInput v-model="printFromDate" :label="t('common.from')" type="date" />
+          <AppInput v-model="printToDate" :label="t('common.to')" type="date" />
+        </div>
+      </div>
+
+      <div
+        v-if="printError"
+        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
+      >
+        {{ printError }}
+      </div>
+      <div v-if="printLoading" class="text-theme-sm text-gray-500 dark:text-gray-400">{{ t('common.loading') }}</div>
+      <p v-else-if="!printOrders.length" class="text-theme-sm text-gray-500 dark:text-gray-400">{{ t('orders.printNone') }}</p>
+      <div v-else class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+        <label class="flex items-center gap-3 border-b border-gray-200 px-4 py-3 text-theme-sm font-medium text-gray-700 dark:border-gray-800 dark:text-gray-300">
+          <input
+            type="checkbox"
+            class="size-4 accent-brand-500"
+            :checked="printOrders.every((o) => printSelected.includes(o.id))"
+            @change="togglePrintAll"
+          />
+          {{ t('orders.selectAll') }}
+          <span class="ml-auto text-theme-xs font-normal text-gray-500">{{ t('orders.selectedCount', { count: printSelected.length }) }}</span>
+        </label>
+        <ul class="max-h-80 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-800">
+          <li v-for="o in printOrders" :key="o.id">
+            <label class="flex cursor-pointer items-start gap-3 px-4 py-3 text-theme-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5">
+              <input
+                type="checkbox"
+                class="mt-0.5 size-4 accent-brand-500"
+                :checked="printSelected.includes(o.id)"
+                @change="togglePrinted(o.id)"
+              />
+              <span class="min-w-0 flex-1">
+                <span class="block font-medium text-gray-800 dark:text-white/90">#{{ o.id }} · {{ o.customerName || t('common.empty') }}</span>
+                <span class="block text-theme-xs text-gray-500">
+                  {{ enumLabel('orderStatus', o.orderStatus) }}
+                  · {{ o.customerPhone || t('common.empty') }}
+                  · {{ o.districtName || t('common.empty') }}
+                  · {{ o.courierName || t('common.empty') }}
+                </span>
+              </span>
+              <span class="shrink-0">{{ money(o.totalSum) }}</span>
+            </label>
+          </li>
+        </ul>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <AppButton variant="secondary" @click="printOpen = false">{{ t('common.cancel') }}</AppButton>
+        <AppButton :loading="printBusy" :disabled="!printSelected.length" @click="printChosen">
+          {{ t('orders.printChecks') }}
+        </AppButton>
       </div>
     </AppModal>
   </div>

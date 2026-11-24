@@ -5,6 +5,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import uz.uwon.pharm.customer.Customer;
+import uz.uwon.pharm.location.District;
 import uz.uwon.pharm.users.User;
 
 import java.time.LocalDate;
@@ -20,7 +21,8 @@ public class OrderSpecification {
             OrderStatus status,
             LocalDate from,
             LocalDate to,
-            Long userId
+            Long userId,
+            Long districtId
     ) {
         return (root, query, cb) -> {
 
@@ -59,6 +61,11 @@ public class OrderSpecification {
             if (userId != null) {
                 Join<Order, User> userJoin = root.join("user", JoinType.LEFT);
                 predicates.add(cb.equal(userJoin.get("id"), userId));
+            }
+
+            if (districtId != null) {
+                Join<Order, District> districtJoin = root.join("district", JoinType.LEFT);
+                predicates.add(cb.equal(districtJoin.get("id"), districtId));
             }
 
 

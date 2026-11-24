@@ -23,4 +23,6 @@ public class OrderResponse {
     private LocalDateTime updatedAt;
     private String courierName;
     private PaymentType paymentType;
+    private String regionName;
+    private String districtName;
 }

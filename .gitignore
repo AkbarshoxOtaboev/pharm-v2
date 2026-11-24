@@ -19,6 +19,7 @@ frontend/.vite/
 Thumbs.db
 
 # Env secrets
+.env
 **/.env.local
 **/.env.production.local
 backend/src/main/resources/application-local.yml

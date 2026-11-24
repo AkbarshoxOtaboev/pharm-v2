@@ -1,7 +1,10 @@
+# Qiymatlar ish papkasidagi .env fayldan olinadi.
 spring:
+  config:
+    import: optional:file:.env[.properties]
   datasource:
-    url: ${DB_URL:jdbc:postgresql://172.10.10.51:5432/velto_test_db}
-    username: ${DB_USERNAME:postgres}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
@@ -22,6 +25,21 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-ms: ${JWT_ACCESS_MS:900000}
+    refresh-token-ms: ${JWT_REFRESH_MS:604800000}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:8080}
+  storage:
+    uploads-location: ${UPLOAD_DIR:uploads}
+    temp-location: ${TEMP_DIR:temp}
+  admin:
+    username: ${ADMIN_USERNAME:}
+    password: ${ADMIN_PASSWORD:}
+    full-name: ${ADMIN_FULL_NAME:Administrator}
 
 logging:
   level:

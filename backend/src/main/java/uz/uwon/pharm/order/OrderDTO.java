@@ -13,6 +13,8 @@ public class OrderDTO {
     private String fullName;
     private String phone;
     private String address;
+    private Long regionId;
+    private Long districtId;
     private String home;
     private String entrance;
     private String apartment;

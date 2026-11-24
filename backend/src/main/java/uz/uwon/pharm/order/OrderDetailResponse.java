@@ -21,6 +21,8 @@ public class OrderDetailResponse {
     private String orderNumber;
     private LocalDateTime createdDate;
     private String address;
+    private String regionName;
+    private String districtName;
     private String house;
     private String entrance;
     private String apartment;

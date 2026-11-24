@@ -25,12 +25,13 @@ public class OrdersApiController {
             @RequestParam(required = false) String phone,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) Long districtId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         OrderPageResponse<OrderResponse> result =
-                orderService.getOrders(id, phone, status, fromDate, toDate, page, size, userId);
+                orderService.getOrders(id, phone, status, fromDate, toDate, page, size, userId, districtId);
         PageMeta meta = PageMeta.builder()
                 .page(result.getPage())
                 .size(size)

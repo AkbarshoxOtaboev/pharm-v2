@@ -98,6 +98,10 @@ defineProps<{ name: string; active?: boolean }>()
       <path d="M12 17V11" />
       <path d="M15 17V15" />
     </g>
+    <g v-else-if="name === 'locations'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 21C12 21 19 14.5 19 9.5C19 5.63 15.87 2.5 12 2.5C8.13 2.5 5 5.63 5 9.5C5 14.5 12 21 12 21Z" />
+      <circle cx="12" cy="9.5" r="2.5" />
+    </g>
     <!-- fallback -->
     <circle v-else cx="12" cy="12" r="4" fill="currentColor" />
   </svg>

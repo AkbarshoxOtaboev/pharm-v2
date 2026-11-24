@@ -59,7 +59,7 @@ onMounted(async () => {
 
 async function loadStats() {
   try {
-    const [dash, cash] = await Promise.all([fetchDashboardStats(), fetchCashSummary()])
+    const [dash, cash] = await Promise.all([fetchDashboardStats(), fetchCashSummary({})])
     salesCount.value = Number(dash.data?.deliveredOrdersCount ?? dash.data?.ordersCount ?? 0)
     paymentsSum.value = Number(cash.data?.handedSum ?? 0)
     debtSum.value = Number(cash.data?.onCourierSum ?? 0)
