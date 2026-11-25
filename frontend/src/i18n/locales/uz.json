@@ -70,6 +70,8 @@
     "amount": "Summa",
     "product": "Mahsulot",
     "courier": "Kuryer",
+    "createdAt": "Yaratilgan sana",
+    "updatedAt": "O‘zgartirilgan sana",
     "customer": "Mijoz",
     "order": "Buyurtma",
     "id": "ID",

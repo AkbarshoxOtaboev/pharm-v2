@@ -70,6 +70,8 @@
     "amount": "Сумма",
     "product": "Маҳсулот",
     "courier": "Курьер",
+    "createdAt": "Яратилган сана",
+    "updatedAt": "Ўзгартирилган сана",
     "customer": "Мижоз",
     "order": "Буюртма",
     "id": "ID",

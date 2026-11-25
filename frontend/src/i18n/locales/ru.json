@@ -70,6 +70,8 @@
     "amount": "Сумма",
     "product": "Товар",
     "courier": "Курьер",
+    "createdAt": "Дата создания",
+    "updatedAt": "Дата изменения",
     "customer": "Клиент",
     "order": "Заказ",
     "id": "ID",

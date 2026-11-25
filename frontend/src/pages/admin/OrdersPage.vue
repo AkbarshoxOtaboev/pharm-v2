@@ -22,7 +22,7 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import type { OrderDetailResponse, OrderResponse, OrderStatus, UserResponse } from '@/types/api'
-import { apiError, fileUrl, money, statusSelectClass } from '@/utils/format'
+import { apiError, dateTime, fileUrl, money, statusSelectClass } from '@/utils/format'
 import { printOrderReceipts, type ReceiptLabels } from '@/utils/printReceipts'
 
 const ORDER_STATUSES: OrderStatus[] = [
@@ -582,6 +582,8 @@ onMounted(async () => {
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.status') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.amount') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.courier') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.createdAt') }}</th>
+        <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.updatedAt') }}</th>
         <th class="px-5 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.actions') }}</th>
       </template>
       <tr v-for="o in orders" :key="o.id">
@@ -602,6 +604,8 @@ onMounted(async () => {
         </td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ money(o.totalSum) }}</td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ o.courierName || t('common.empty') }}</td>
+        <td class="whitespace-nowrap px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ dateTime(o.createdAt) || t('common.empty') }}</td>
+        <td class="whitespace-nowrap px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">{{ dateTime(o.updatedAt) || t('common.empty') }}</td>
         <td class="px-5 py-3 text-theme-sm text-gray-700 dark:text-gray-300">
           <div class="flex items-center gap-1.5">
             <button
