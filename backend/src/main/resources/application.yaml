@@ -14,6 +14,11 @@ app:
   storage:
     uploads-location: ${UPLOAD_DIR:uploads}
     temp-location: ${TEMP_DIR:temp}
+  # Excel ustunlari /admin/products (ACTIVE, sortNumber) dan olinadi.
+  # Ixtiyoriy: aniq tartib uchun product id larini yozing (max 9 / 8).
+  order-export:
+    product-ids: []
+    gift-product-ids: []
 
 springdoc:
   api-docs:

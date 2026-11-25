@@ -51,6 +51,7 @@ export interface OrderListParams {
   phone?: string
   status?: OrderStatus
   userId?: number
+  regionId?: number
   districtId?: number
   fromDate?: string
   toDate?: string
@@ -67,6 +68,39 @@ export interface OrderDeliveredInfoResponse {
 export async function fetchOrders(params: OrderListParams = {}) {
   const { data } = await api.get<ApiResponse<OrderResponse[]>>('/orders', { params })
   return data
+}
+
+/** Viloyat + sana bo‘yicha buyurtmalar Excel (.xlsx) yuklab olish. */
+export async function downloadOrdersExcel(params: { regionId: number; date: string }) {
+  const res = await api.get<Blob>('/orders/export', {
+    params,
+    responseType: 'blob',
+  })
+  const contentType = String(res.headers['content-type'] || '')
+  if (contentType.includes('application/json')) {
+    const text = await res.data.text()
+    let message = 'Export failed'
+    try {
+      const json = JSON.parse(text) as { error?: { message?: string }; message?: string }
+      message = json.error?.message || json.message || message
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message)
+  }
+  const disposition = res.headers['content-disposition'] as string | undefined
+  let filename = `orders_${params.date}.xlsx`
+  const star = disposition?.match(/filename\*=UTF-8''([^;]+)/i)
+  const plain = disposition?.match(/filename="?([^";]+)"?/i)
+  if (star?.[1]) filename = decodeURIComponent(star[1].trim())
+  else if (plain?.[1]) filename = plain[1].trim()
+
+  const url = URL.createObjectURL(res.data)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 export async function fetchOrder(id: number) {

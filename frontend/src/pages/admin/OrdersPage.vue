@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Swal from 'sweetalert2'
 import { enumLabel } from '@/i18n'
 import {
+  downloadOrdersExcel,
   fetchOrder,
   fetchOrderComments,
   fetchOrders,
@@ -12,8 +13,9 @@ import {
   type OrderListParams,
 } from '@/api/orders.api'
 import { fetchCouriers } from '@/api/users.api'
-import { fetchDistricts, type DistrictItem } from '@/api/locations.api'
+import { fetchDistricts, fetchRegions, type DistrictItem, type RegionItem } from '@/api/locations.api'
 import AppButton from '@/components/ui/AppButton.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -69,11 +71,33 @@ const totalElements = ref(0)
 const phone = ref('')
 const status = ref('')
 const courierId = ref('')
+const regionId = ref('')
 const districtId = ref('')
-const districts = ref<DistrictItem[]>([])
+const regions = ref<RegionItem[]>([])
+const allDistricts = ref<DistrictItem[]>([])
 const dateDefaults = defaultDateRange()
 const fromDate = ref(dateDefaults.from)
 const toDate = ref(dateDefaults.to)
+
+const filteredDistricts = computed(() => {
+  if (!regionId.value) return allDistricts.value
+  const rid = Number(regionId.value)
+  return allDistricts.value.filter((d) => d.regionId === rid)
+})
+
+const excelOpen = ref(false)
+const excelRegionId = ref('')
+const excelDate = ref(toIsoDate(new Date()))
+const excelOrders = ref<OrderResponse[]>([])
+const excelLoading = ref(false)
+const excelError = ref('')
+const exporting = ref(false)
+let excelLoadSeq = 0
+let excelFilterSilent = false
+
+const canDownloadExcel = computed(
+  () => Boolean(excelRegionId.value && excelDate.value && excelOrders.value.length && !excelLoading.value),
+)
 
 const detailOpen = ref(false)
 const detailLoading = ref(false)
@@ -116,6 +140,7 @@ async function load() {
     if (phone.value.trim()) params.phone = phone.value.trim()
     if (status.value) params.status = status.value
     if (courierId.value) params.userId = Number(courierId.value)
+    if (regionId.value) params.regionId = Number(regionId.value)
     if (districtId.value) params.districtId = Number(districtId.value)
     if (fromDate.value) params.fromDate = fromDate.value
     if (toDate.value) params.toDate = toDate.value
@@ -143,6 +168,7 @@ function resetFilters() {
   phone.value = ''
   status.value = ''
   courierId.value = ''
+  regionId.value = ''
   districtId.value = ''
   const range = defaultDateRange()
   fromDate.value = range.from
@@ -152,8 +178,74 @@ function resetFilters() {
   load()
 }
 
-watch([phone, status, courierId, districtId, fromDate, toDate], () => scheduleLoad(true))
+watch([phone, status, courierId, regionId, districtId, fromDate, toDate], () => scheduleLoad(true))
 watch(size, () => scheduleLoad(true))
+watch(regionId, () => {
+  if (districtId.value && !filteredDistricts.value.some((d) => String(d.id) === districtId.value)) {
+    districtId.value = ''
+  }
+})
+
+async function loadExcelOrders() {
+  if (!excelRegionId.value || !excelDate.value) {
+    excelOrders.value = []
+    return
+  }
+  const seq = ++excelLoadSeq
+  excelLoading.value = true
+  excelError.value = ''
+  try {
+    const res = await fetchOrders({
+      page: 0,
+      size: -1,
+      regionId: Number(excelRegionId.value),
+      fromDate: excelDate.value,
+      toDate: excelDate.value,
+    })
+    if (seq !== excelLoadSeq) return
+    excelOrders.value = res.data || []
+  } catch (e) {
+    if (seq !== excelLoadSeq) return
+    excelError.value = apiError(e, 'errors.loadOrders')
+    excelOrders.value = []
+  } finally {
+    if (seq === excelLoadSeq) excelLoading.value = false
+  }
+}
+
+function openExcelModal() {
+  excelFilterSilent = true
+  excelError.value = ''
+  excelOrders.value = []
+  excelRegionId.value = regionId.value
+  excelDate.value = toDate.value || toIsoDate(new Date())
+  excelOpen.value = true
+  void loadExcelOrders()
+  void nextTick(() => {
+    excelFilterSilent = false
+  })
+}
+
+watch([excelRegionId, excelDate], () => {
+  if (excelOpen.value && !excelFilterSilent) void loadExcelOrders()
+})
+
+async function exportExcel() {
+  if (!canDownloadExcel.value) return
+  exporting.value = true
+  excelError.value = ''
+  try {
+    await downloadOrdersExcel({
+      regionId: Number(excelRegionId.value),
+      date: excelDate.value,
+    })
+    excelOpen.value = false
+  } catch (e) {
+    excelError.value = apiError(e, 'errors.exportFailed')
+  } finally {
+    exporting.value = false
+  }
+}
 
 async function openDetail(id: number) {
   detailOpen.value = true
@@ -397,12 +489,18 @@ async function onRowStatusChange(order: OrderResponse, event: Event) {
 
 onMounted(async () => {
   try {
-    const [courierRes, districtRes] = await Promise.all([fetchCouriers(), fetchDistricts()])
+    const [courierRes, regionRes, districtRes] = await Promise.all([
+      fetchCouriers(),
+      fetchRegions(),
+      fetchDistricts(),
+    ])
     couriers.value = courierRes.data || []
-    districts.value = districtRes.data || []
+    regions.value = regionRes.data || []
+    allDistricts.value = districtRes.data || []
   } catch {
     couriers.value = []
-    districts.value = []
+    regions.value = []
+    allDistricts.value = []
   }
   await load()
 })
@@ -412,6 +510,10 @@ onMounted(async () => {
   <div>
     <PageHeader :title="t('orders.title')" :subtitle="t('orders.subtitle')">
       <template #actions>
+        <AppButton variant="success" @click="openExcelModal">
+          <AppIcon name="download" class="size-4.5" />
+          {{ t('orders.exportExcel') }}
+        </AppButton>
         <AppButton variant="secondary" @click="openPrintModal">{{ t('orders.printChecks') }}</AppButton>
         <AppButton @click="$router.push('/admin/orders/create')">{{ t('orders.newOrder') }}</AppButton>
       </template>
@@ -428,21 +530,25 @@ onMounted(async () => {
           <option value="">{{ t('common.all') }}</option>
           <option v-for="c in couriers" :key="c.id" :value="String(c.id)">{{ c.fullName }}</option>
         </AppSelect>
+        <AppSelect v-model="regionId" :label="t('locations.region')">
+          <option value="">{{ t('common.all') }}</option>
+          <option v-for="r in regions" :key="r.id" :value="String(r.id)">{{ r.name }}</option>
+        </AppSelect>
         <AppSelect v-model="districtId" :label="t('locations.place')">
           <option value="">{{ t('common.all') }}</option>
-          <option v-for="d in districts" :key="d.id" :value="String(d.id)">
+          <option v-for="d in filteredDistricts" :key="d.id" :value="String(d.id)">
             {{ d.regionName ? `${d.regionName} — ${d.name}` : d.name }}
           </option>
         </AppSelect>
         <AppInput v-model="fromDate" :label="t('common.from')" type="date" />
         <AppInput v-model="toDate" :label="t('common.to')" type="date" />
-        <AppSelect v-model="size" :label="t('common.limit')">
-          <option v-for="n in PAGE_SIZES" :key="n" :value="String(n)">{{ n }}</option>
-        </AppSelect>
-        <div class="flex items-end">
+        <div class="flex items-end gap-2">
+          <AppSelect v-model="size" :label="t('common.limit')" class="min-w-0 flex-1">
+            <option v-for="n in PAGE_SIZES" :key="n" :value="String(n)">{{ n }}</option>
+          </AppSelect>
           <button
             type="button"
-            class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5"
+            class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5"
             :title="t('common.clear')"
             @click="resetFilters"
           >
@@ -668,6 +774,67 @@ onMounted(async () => {
       </div>
     </AppModal>
 
+    <AppModal :open="excelOpen" :title="t('orders.exportExcel')" @close="excelOpen = false">
+      <p class="mb-4 text-theme-sm text-gray-500 dark:text-gray-400">{{ t('orders.exportHint') }}</p>
+      <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <AppSelect v-model="excelRegionId" :label="t('locations.region')">
+          <option value="">{{ t('orders.exportPickRegion') }}</option>
+          <option v-for="r in regions" :key="r.id" :value="String(r.id)">{{ r.name }}</option>
+        </AppSelect>
+        <AppInput v-model="excelDate" :label="t('orders.exportDate')" type="date" />
+      </div>
+
+      <div
+        v-if="excelError"
+        class="mb-3 rounded-xl border border-error-100 bg-error-50 px-4 py-3 text-theme-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10"
+      >
+        {{ excelError }}
+      </div>
+
+      <div v-if="!excelRegionId || !excelDate" class="text-theme-sm text-gray-500 dark:text-gray-400">
+        {{ t('orders.exportNeedFilters') }}
+      </div>
+      <div v-else-if="excelLoading" class="text-theme-sm text-gray-500 dark:text-gray-400">{{ t('common.loading') }}</div>
+      <p v-else-if="!excelOrders.length" class="text-theme-sm text-gray-500 dark:text-gray-400">{{ t('orders.exportNone') }}</p>
+      <div v-else class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+        <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 text-theme-sm font-medium text-gray-700 dark:border-gray-800 dark:text-gray-300">
+          <span>{{ t('orders.exportOrdersTitle') }}</span>
+          <span class="text-theme-xs font-normal text-gray-500">{{ t('orders.exportOrdersCount', { count: excelOrders.length }) }}</span>
+        </div>
+        <ul class="max-h-80 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-800">
+          <li
+            v-for="o in excelOrders"
+            :key="o.id"
+            class="flex items-start gap-3 px-4 py-3 text-theme-sm text-gray-700 dark:text-gray-300"
+          >
+            <span class="min-w-0 flex-1">
+              <span class="block font-medium text-gray-800 dark:text-white/90">#{{ o.id }} · {{ o.customerName || t('common.empty') }}</span>
+              <span class="block text-theme-xs text-gray-500">
+                {{ enumLabel('orderStatus', o.orderStatus) }}
+                · {{ o.customerPhone || t('common.empty') }}
+                · {{ o.districtName || t('common.empty') }}
+                · {{ o.courierName || t('common.empty') }}
+              </span>
+            </span>
+            <span class="shrink-0">{{ money(o.totalSum) }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <AppButton variant="secondary" @click="excelOpen = false">{{ t('common.cancel') }}</AppButton>
+        <AppButton
+          variant="success"
+          :loading="exporting"
+          :disabled="!canDownloadExcel"
+          @click="exportExcel"
+        >
+          <AppIcon v-if="!exporting" name="download" class="size-4.5" />
+          {{ t('orders.exportExcel') }}
+        </AppButton>
+      </div>
+    </AppModal>
+
     <AppModal :open="printOpen" :title="t('orders.printChecks')" @close="printOpen = false">
       <p class="mb-4 text-theme-sm text-gray-500 dark:text-gray-400">{{ t('orders.printHint') }}</p>
       <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -681,7 +848,7 @@ onMounted(async () => {
         </AppSelect>
         <AppSelect v-model="printDistrictId" :label="t('locations.place')">
           <option value="">{{ t('common.all') }}</option>
-          <option v-for="d in districts" :key="d.id" :value="String(d.id)">
+          <option v-for="d in allDistricts" :key="d.id" :value="String(d.id)">
             {{ d.regionName ? `${d.regionName} — ${d.name}` : d.name }}
           </option>
         </AppSelect>

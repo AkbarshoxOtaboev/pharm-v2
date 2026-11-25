@@ -26,6 +26,25 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     Optional<Order> findFirstByCustomerIdOrderByIdDesc(Long customerId);
 
     @Query("""
+            SELECT DISTINCT o FROM Order o
+            LEFT JOIN FETCH o.orderItems oi
+            LEFT JOIN FETCH oi.product
+            LEFT JOIN FETCH o.customer
+            LEFT JOIN FETCH o.user
+            LEFT JOIN FETCH o.region
+            WHERE o.region.id = :regionId
+              AND o.createdAt >= :start
+              AND o.createdAt <= :end
+              AND o.orderStatus <> uz.uwon.pharm.order.OrderStatus.DELETED
+            ORDER BY o.id ASC
+            """)
+    List<Order> findForExcelExport(
+            @Param("regionId") Long regionId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    @Query("""
                 SELECT COUNT(o)
                 FROM Order o
                 WHERE o.orderStatus = uz.uwon.pharm.order.OrderStatus.SHIPPED

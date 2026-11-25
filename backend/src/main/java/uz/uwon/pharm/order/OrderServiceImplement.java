@@ -207,10 +207,11 @@ public class OrderServiceImplement implements OrderService {
             int page,
             int size,
             Long userId,
+            Long regionId,
             Long districtId
     ) {
 
-        Specification<Order> spec = OrderSpecification.filter(id, phone, status, from, to, userId, districtId);
+        Specification<Order> spec = OrderSpecification.filter(id, phone, status, from, to, userId, regionId, districtId);
 
         // 🔒 exclude DELETED for VIEWER
         if (userService.getCurrentUser().getRole().equals(Role.VIEWER)) {

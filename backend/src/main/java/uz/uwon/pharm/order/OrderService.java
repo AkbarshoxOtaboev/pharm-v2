@@ -15,7 +15,7 @@ public interface OrderService {
     List<OrderResponse> findAll();
     OrderDetailResponse orderDetailResponses(Long orderId);
 
-    OrderPageResponse<OrderResponse> getOrders(Long id, String phone, OrderStatus status, LocalDate fromDate, LocalDate toDate, int page, int size, Long userId, Long districtId);
+    OrderPageResponse<OrderResponse> getOrders(Long id, String phone, OrderStatus status, LocalDate fromDate, LocalDate toDate, int page, int size, Long userId, Long regionId, Long districtId);
 
     void updateStatus(Long id, String status);
     List<OrderDetailResponse> findOrdersByUserAndStatus(Long userId, OrderStatus orderStatus, LocalDateTime startDate, LocalDateTime endDate);
